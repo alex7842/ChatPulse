@@ -1,0 +1,65 @@
+import { PLANS } from "@/lib/constants";
+import { generateQuestions } from '@/lib/GenerateQuestion';
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { prisma } from "@/server/db";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
+export const questionRouter = createTRPCRouter({
+  generateResponse: protectedProcedure
+    .input(z.object({ documentId: z.string(), question: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const res = await ctx.prisma.document.findUnique({
+        where: {
+          id: input.documentId,
+          OR: [
+            { ownerId: ctx.session.user.id },
+            {
+              collaborators: {
+                some: {
+                  userId: ctx.session.user.id,
+                },
+              },
+            },
+          ],
+        },
+        select: {
+          url: true,
+          owner: {
+            select: {
+              plan: true,
+            },
+          },
+        },
+      });
+
+      if (!res) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document not found or you do not have access to it",
+        });
+      }
+
+      const docOwnerPlan = res.owner.plan;
+      const maxPagesAllowed = PLANS[docOwnerPlan].maxPagesPerDoc;
+
+      const response = await generateQuestions(res.url, maxPagesAllowed);
+      console.log(response);
+      return response;
+    }),
+
+  getQuestions: protectedProcedure
+    .input(z.object({ documentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const questions = await ctx.prisma.question.findMany({
+        where: {
+          documentId: input.documentId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return questions;
+    }),
+});
