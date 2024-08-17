@@ -62,7 +62,7 @@ model Document {
   createdAt     DateTime       @default(now())
   isUploaded    Boolean        @default(true)
   flashcards    Flashcard[]
- 
+  generatedQuestions GeneratedQuestion[]  @relation("DocumentToGeneratedQuestion")
   questionResponses QuestionResponse[]
   questions    Question[]
   
@@ -71,6 +71,7 @@ model Document {
 model Question {
   id         String   @id @default(cuid())
   question   String
+   answer     String  
   marks      Int
   type       String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
@@ -82,6 +83,7 @@ model Question {
 model QuestionResponse {
   id         String   @id @default(cuid())
   query      String
+  
   response   String   @db.Text
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   questionId String
@@ -187,4 +189,15 @@ model FlashcardAttempt {
   incorrectResponse String?
   // more info about the answer
   moreInfo          String?
+}
+
+model GeneratedQuestion {
+  id          String   @id @default(cuid())
+  questionText String
+  answer       String
+  documentId   String
+  marks        String
+  document     Document @relation("DocumentToGeneratedQuestion", fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

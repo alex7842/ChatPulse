@@ -45,7 +45,16 @@ export const questionRouter = createTRPCRouter({
 
       const response = await generateQuestions(res.url, maxPagesAllowed);
       console.log(response);
-      return response;
+      const createdQuestions = await ctx.prisma.generatedQuestion.createMany({
+        data: response.map(question => ({
+          questionText: question.question,
+          answer: question.answer,
+          marks: question.marks.toString(), // Convert to string if it's not already
+          documentId: input.documentId,
+        })),
+      });
+      
+      return createdQuestions;
     }),
 
   getQuestions: protectedProcedure
@@ -62,4 +71,19 @@ export const questionRouter = createTRPCRouter({
 
       return questions;
     }),
+    getGeneratedQuestions: protectedProcedure
+  .input(z.object({ documentId: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const questions = await ctx.prisma.generatedQuestion.findMany({
+      where: {
+        documentId: input.documentId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return questions;
+  }),
+
+
 });

@@ -37,7 +37,7 @@ export const generateQuestions = async (
         messages: [
           {
             role: "system",
-            content: `You are an advanced AI assistant specialized in creating educational questions. Your task is to generate a mix of 2-mark and 5-mark questions based on the provided text. For 2-mark questions, focus on factual recall and brief explanations. For 5-mark questions, emphasize deeper understanding, application of concepts, and critical thinking. Create clear, concise, and relevant questions. Provide the output in JSON Array format, with each question object containing 'question', 'marks', and 'type' fields.`,
+            content: `You are an advanced AI assistant specialized in creating educational questions. Your task is to generate a mix of 2-mark and 5-mark questions and answers based on the provided text. For 2-mark questions, focus on factual recall and brief explanations. For 5-mark questions, emphasize deeper understanding, application of concepts, and critical thinking. Create clear, concise, and relevant questions and answers. Provide the output in JSON Array format, with each question object containing 'question', 'marks','answer' and 'type' fields.`,
           },
           {
             role: "user",
@@ -79,5 +79,6 @@ export const generateQuestions = async (
 interface QuestionType {
   question: string;
   marks: number;
+  answer:string;
   type: string;
 }
