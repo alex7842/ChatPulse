@@ -3,7 +3,6 @@ import '@/styles/styles.scss'
 import { convert } from 'html-to-text';
 import TurndownService from 'turndown';
 
-
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Download,Copy,FileText,FileUp} from 'lucide-react';
 import { EditorContent, useEditor } from '@tiptap/react'

@@ -14,8 +14,8 @@ export const PLANS: Record<Plan, PlanData> = {
     title: "Free",
     price: 0,
     maxDocs: 1, // Changed from 1 to 2
-    maxPagesPerDoc: 6, // Changed from 5 to 6
-    maxFileSizePerDoc: 6 * 1024 * 1024, // 8MB in bytes
+    maxPagesPerDoc: 12, // Changed from 5 to 6
+    maxFileSizePerDoc: 7 * 1024 * 1024, // 8MB in bytes
     maxCollaboratorsPerDoc: 0,
   },
   PRO: {

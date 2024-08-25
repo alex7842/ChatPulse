@@ -225,7 +225,9 @@ const downloadAllAs = (format: 'copy' | 'pdf' | 'word' | 'markdown') => {
   </div>
   </DialogContent>
 </Dialog>
+
         {questions && questions.length > 0 && (
+         
   <div className="mt-4 p-4 bg-gray-100 rounded">
     <div className='flex mb-3 justify-between items-center'>
   <h3 className="text-lg font-semibold mb-2">Generated Questions:</h3>
