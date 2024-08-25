@@ -244,10 +244,10 @@ const Sidebar = ({
               >
                 {!showDrawingTab ? (
                   <>
-                  {/* for drawing */}
-                    {/* <button onClick={() => setShowDrawingTab(true)} className="mb-4">
+                  {/* for drawing */} 
+                     <button onClick={() => setShowDrawingTab(true)} className="mb-4">
                       <Brush size={20} />
-                    </button> */}
+                    </button>
                     <ClientSideSuspense fallback={<SpinnerPage />}>
                       {() => (
                         <Editor

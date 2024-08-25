@@ -5,7 +5,7 @@ import { messageRouter } from "@/server/api/routers/message";
 import { questionRouter } from "./routers/generatequestions";
 import { userRouter } from "@/server/api/routers/user";
 import { createTRPCRouter } from "@/server/api/trpc";
-
+import { researchRouter } from "@/server/api/routers/research";
 export const appRouter = createTRPCRouter({
   document: documentRouter,
   user: userRouter,
@@ -13,6 +13,7 @@ export const appRouter = createTRPCRouter({
   message: messageRouter,
   flashcard: flashcardRouter,
   question: questionRouter,
+  research: researchRouter,
 });
 
 export type AppRouter = typeof appRouter;

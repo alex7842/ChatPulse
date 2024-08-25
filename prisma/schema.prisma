@@ -41,6 +41,7 @@ model User {
   plan                      Plan               @default(FREE)
   phone                     String?
   questionResponses         QuestionResponse[]
+ searchResponses            SearchResponse[]
 }
 
 enum Plan {
@@ -64,6 +65,7 @@ model Document {
   flashcards    Flashcard[]
   generatedQuestions GeneratedQuestion[]  @relation("DocumentToGeneratedQuestion")
   questionResponses QuestionResponse[]
+  
   questions    Question[]
   
 }
@@ -121,6 +123,19 @@ model Message {
   documentId    String
   isUserMessage Boolean
 }
+model SearchResponse {
+  id              String   @id @default(cuid())
+  userId          String
+  query           String
+  serperResponse  Json?
+  tavilyResponse  Json?
+  serperVideos    Json?
+  serperNews      Json?
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+
 
 enum HighlightTypeEnum {
   TEXT

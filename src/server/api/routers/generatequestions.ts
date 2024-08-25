@@ -53,7 +53,7 @@ export const questionRouter = createTRPCRouter({
           documentId: input.documentId,
         })),
       });
-      
+      console.log("genertaed questions",createdQuestions);
       return createdQuestions;
     }),
 
