@@ -13,33 +13,33 @@ export const researchRouter = createTRPCRouter({
     serperNews: z.any(),
   }))
   .mutation(async ({ ctx, input }) => {
-    return ctx.prisma.user.update({
-      where: { id: ctx.session.user.id },
-      data: {
-        searchResponses: {
-          create: {
-            query: input.query,
-            serperResponse: input.serperResponse,
-            tavilyResponse: input.tavilyResponse,
-            serperVideos: input.serperVideos,
-            serperNews: input.serperNews,
-          }
-        }
-      },
-      include: {
-        searchResponses: true
-      }
-    });
+    try {
+      const result = await ctx.prisma.searchResponse.create({
+        data: {
+          userId: ctx.session.user.id,
+          query: input.query,
+          serperResponse: input.serperResponse,
+          tavilyResponse: input.tavilyResponse,
+          serperVideos: input.serperVideos,
+          serperNews: input.serperNews,
+        },
+      });
+      console.log('Successfully stored data:', result);
+      return result;
+    } catch (error) {
+      console.error('Error storing data:', error);
+      throw error;
+    }
   }),
 
 
   getPreviousResponses: protectedProcedure
-    .query(async ({ ctx }) => {
-      return ctx.prisma.searchResponse.findMany({
-        where: { userId: ctx.session.user.id },
-        orderBy: { createdAt: 'desc' },
-      });
-    }),
+  .query(async ({ ctx }) => {
+    return ctx.prisma.searchResponse.findMany({
+      where: { userId: ctx.session.user.id },
+      orderBy: { createdAt: 'asc' },
+    });
+  }),
 
   getSummary: protectedProcedure
     .input(

@@ -13,45 +13,45 @@ import { useRouter } from "next/router";
 import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
-const Research: React.FC<{
+const Research: React.FC<{ 
   setisopen: React.Dispatch<React.SetStateAction<boolean>>,
-  docId: string
+  docId: string 
 }> = ({ setisopen, docId }) => {
   const [pdfSummary, setPdfSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [pdf,setpdf]=useState(true);
+  const [pdf, setpdf] = useState(true);
   const [query, setQuery] = useState('');
   const [tavilyResponse, setTavilyResponse] = useState<any>(null);
   const [serperResponse, setSerperResponse] = useState<any>(null);
-  const [SerperVideos,setSerperVideos]= useState<any>(null);
-  const [SerperNews,setSerperNews]= useState<any>(null);
-  const organicResultsRef = useRef<HTMLDivElement>(null);
+  const [SerperVideos, setSerperVideos] = useState<any>(null);
+  const [SerperNews, setSerperNews] = useState<any>(null);
   const [response, setResponse] = useState<string>('');
-  const responseRef = useRef<HTMLDivElement>(null);
+  const [allResponses, setAllResponses] = useState<any[]>([]);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [allResponses, setAllResponses] = useState<Array<{
-    query: string;
-    serperResponse: any;
-    tavilyResponse: any;
-    serperVideos: any;
-    serperNews: any;
-  }>>([]);
+
+  const organicResultsRef = useRef<HTMLDivElement>(null);
+  const responseRef = useRef<HTMLDivElement>(null);
+
+  const { data: previousResponses } = api.research.getPreviousResponses.useQuery();
+  const storeResponseMutation = api.research.storeResponse.useMutation();
   const { data: researchResponse, isLoading: researchIsLoading } = api.research.getSummary.useQuery(
-    {
-      docId: docId as string,
-    },
-    {
-      enabled: !!docId,
-      refetchOnWindowFocus: false,
-    }
+    { docId: docId as string },
+    { enabled: !!docId, refetchOnWindowFocus: false }
   );
+
+  useEffect(() => {
+    if (previousResponses) {
+      setAllResponses(previousResponses);
+    }
+  }, [previousResponses]);
+
   useEffect(() => {
     if (responseRef.current) {
       responseRef.current.scrollTop = responseRef.current.scrollHeight;
     }
   }, [response]);
+
   const handleScroll = useCallback(() => {
     if (organicResultsRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = organicResultsRef.current;
@@ -60,47 +60,33 @@ const Research: React.FC<{
         // loadMoreResults();
       }
     }
-  }, [])
+  }, []);
+
   useEffect(() => {
     if (researchResponse) {
-      setPdfSummary(researchResponse)
-      
+      setPdfSummary(researchResponse);
       console.log("PDF Summary1:", researchResponse);
-
       console.log("PDF by state:", pdfSummary);
     }
   }, [researchResponse]);
-  useEffect(() => {
-    const fetchPreviousResponses = async () => {
-      try {
-        const { data: previousResponses } = api.research.getPreviousResponses.useQuery();
 
-        setAllResponses(previousResponses ?? []);
-      } catch (error) {
-        console.error('Error fetching previous responses:', error);
-      }
-    };
-  
-    fetchPreviousResponses();
-  }, []);
-  
   const openImageModal = (index: number) => {
     setSelectedImageIndex(index);
     setIsImageModalOpen(true);
   };
+
   const handleSubmit = async () => {
-  
     if (pdfSummary && query) {
       try {
         setIsLoading(true);
         setResponse('');
-        console.log("for context is",pdfSummary);
-        const contextualQuery = pdf ? `${query} (give answer related to this keywords: ${pdfSummary})`:query;
-        const contextualQuery1 = pdf ? `${query} (search by this keywords: ${pdfSummary})`:query;
+        console.log("for context is", pdfSummary);
+        const contextualQuery = pdf ? `${query} (give answer related to this keywords: ${pdfSummary})` : query;
+        const contextualQuery1 = pdf ? `${query} (search by this keywords: ${pdfSummary})` : query;
         const filledQuery = contextualQuery.length < 5 ? contextualQuery + ' '.repeat(5 - contextualQuery.length) : contextualQuery;
         const filledQuery1 = contextualQuery1.length < 5 ? contextualQuery1 + ' '.repeat(5 - contextualQuery1.length) : contextualQuery1;
-      
-        const [serperResponse, tavilyResult,serperVideos, serperNews] = await Promise.all([
+
+        const [serperResponse, tavilyResult, serperVideos, serperNews] = await Promise.all([
           fetch('https://google.serper.dev/search', {
             method: 'POST',
             headers: {
@@ -140,7 +126,7 @@ const Research: React.FC<{
             })
           })
         ]);
-       
+
         const serperData = await serperResponse.json();
         const serperVideosData = await serperVideos.json();
         const serperNewsData = await serperNews.json();
@@ -152,29 +138,26 @@ const Research: React.FC<{
           serperVideos: serperVideosData,
           serperNews: serperNewsData,
         };
-        setAllResponses(prevResponses => [...prevResponses, newResponse]);
-        const storeResponseMutation = api.research.storeResponse.useMutation();
 
         await storeResponseMutation.mutateAsync(newResponse);
 
+        setAllResponses(prevResponses => [...prevResponses, newResponse]);
         setSerperResponse(serperData);
         setTavilyResponse(tavilyResult);
         setSerperVideos(serperVideosData);
         setSerperNews(serperNewsData);
         setQuery('');
         setIsLoading(false);
+
         console.log('Serper API Response:', serperData);
         console.log('Tavily API Response:', tavilyResult);
-        console.log('Tavily API Response:', serperVideosData);
-        // Gradually reveal the response
+        console.log('Serper Videos Response:', serperVideosData);
+
         const combinedResponse = `Serper API Response: ${JSON.stringify(serperData)}\n\nTavily API Response: ${JSON.stringify(tavilyResult)}`;
         for (let i = 0; i < combinedResponse.length; i++) {
           await new Promise(resolve => setTimeout(resolve, 20));
           setResponse(prev => prev + combinedResponse[i]);
         }
-
-     
-     
       } catch (error) {
         console.error('Error querying APIs:', error);
         setIsLoading(false);
@@ -222,14 +205,7 @@ const Research: React.FC<{
       handleSubmit();
     }
   };
-  interface ResponseType {
-    query: string;
-    serperResponse: any;
-    tavilyResponse: any;
-    SerperVideos: any;
-    SerperNews: any;
-    index:number;
-  }
+ 
   
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] w-full bg-white sm:rounded-lg sm:border sm:shadow-lg relative">
@@ -298,7 +274,7 @@ const Research: React.FC<{
                   </div>
                 )}
                 {isImageModalOpen && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+                  <div className="absolute inset-0 bg-transparent bg-opacity-50 flex items-center justify-center z-10">
                     <div className="bg-white rounded-lg overflow-hidden relative" style={{ width: '90%', maxWidth: '800px', maxHeight: '90%' }}>
                       <Carousel className="w-full h-full">
                         <CarouselContent>
@@ -351,17 +327,17 @@ const Research: React.FC<{
                       (video.link.includes('facebook.com') && video.link.includes('/videos/'))
                     )
                     .map((video: { imageUrl: string; title: string; link: string; duration: string }, index: number) => (
-                      <div key={index} className="video-item bg-white rounded-lg overflow-hidden shadow-sm relative group">
-                        <img src={video.imageUrl} alt={video.title} className="w-full h-40 object-cover" />
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <span className="text-white font-semibold">{video.duration}</span>
-                        </div>
-                        <div className="p-4">
-                          <a href={video.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline visited:text-purple-600 text-sm font-medium">
-                            {video.title}
-                          </a>
-                        </div>
+                      <div className="video-item bg-white rounded-lg overflow-hidden shadow-sm relative group">
+                      <img src={video.imageUrl} alt={video.title} className="w-full h-40 object-cover" />
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <span className="text-white font-semibold">{video.duration}</span>
                       </div>
+                      <div className="p-4">
+                        <a href={video.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline visited:text-purple-600 text-sm font-medium">
+                          {video.title}
+                        </a>
+                      </div>
+                    </div>
                     ))}
                 </div>
               </div>

@@ -42,6 +42,7 @@ model User {
   phone                     String?
   questionResponses         QuestionResponse[]
  searchResponses            SearchResponse[]
+ 
 }
 
 enum Plan {
@@ -65,9 +66,21 @@ model Document {
   flashcards    Flashcard[]
   generatedQuestions GeneratedQuestion[]  @relation("DocumentToGeneratedQuestion")
   questionResponses QuestionResponse[]
-  
+   counts             DocumentCounts?
   questions    Question[]
   
+}
+
+model DocumentCounts {
+  id            String   @id @default(cuid())
+  documentId    String   @unique
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  questionCount Int      @default(0)
+  researchCount Int      @default(0)
+  chatCount     Int      @default(0)
+  flashCount    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Question {
