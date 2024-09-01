@@ -32,15 +32,13 @@ const UpgradePlansPage = () => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
-
     return () => clearTimeout(timer);
   }, []);
 
   const pricingItems = [
     {
       plan: "Weekly",
-      // price: PLANS.PRO.price / 4,
-      price : 2.99,
+      price: 2.99,
       tagline: "For short-term projects.",
       quota: PLANS.PRO.maxDocs,
       features: [
@@ -134,7 +132,6 @@ const UpgradePlansPage = () => {
               Choose the plan that best fits your needs and take your projects to the next level.
             </p>
           </div>
-
           <div className="pt-12 grid grid-cols-1 gap-10 lg:grid-cols-3">
             <TooltipProvider>
               {pricingItems.map(({ plan, price, tagline, quota, features }) => (
@@ -147,11 +144,9 @@ const UpgradePlansPage = () => {
                 >
                   {plan === "Monthly" && (
                     <div className="absolute -top-5 left-0 right-0 mx-auto w-32 rounded-full bg-gradient-to-r from-blue-500 to-green-500 px-3 py-2 text-sm font-medium text-white">
-                    Popular
-                  </div>
-                  
+                      Popular
+                    </div>
                   )}
-
                   <div className="p-5">
                     <h3 className="my-3 text-center font-display text-3xl font-bold">
                       {plan}
@@ -162,14 +157,12 @@ const UpgradePlansPage = () => {
                     </p>
                     <p className="text-gray-500">{plan.toLowerCase()}</p>
                   </div>
-
                   <div className="flex h-20 items-center justify-center border-b border-t border-gray-200 bg-gray-50">
                     <div className="flex items-center space-x-1">
                       <p>
                         {quota.toLocaleString()} PDFs/
                         {plan === "Yearly" ? "year" : plan.toLowerCase()}
                       </p>
-
                       <Tooltip delayDuration={300}>
                         <TooltipTrigger className="cursor-default ml-1.5">
                           <HelpCircle className="h-4 w-4 text-zinc-500" />
@@ -180,7 +173,6 @@ const UpgradePlansPage = () => {
                       </Tooltip>
                     </div>
                   </div>
-
                   <ul className="my-10 space-y-5 px-8">
                     {features.map(({ text, footnote }) => (
                       <li key={text} className="flex space-x-5">

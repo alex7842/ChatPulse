@@ -1,114 +1,42 @@
 import { Button } from "@/components/ui/button";
-import { CashfreeInstance, load } from "@cashfreepayments/cashfree-js";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { FC, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+
 interface UpgradeButtonProps {
   plan: string;
   price: number;
 }
 
-interface PaymentSessionResponse {
-  payment_session_id: string;
-  order_id: string;
-}
-
-interface PaymentVerificationResponse {
-  order_id: string;
-  order_status: string;
-  order_amount: number;
-  order_currency: string;
-}
-
-interface SubscriptionUpdateResponse {
-  success: boolean;
-}
-
 const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [cashfree, setCashfree] = useState<CashfreeInstance | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    const initializeCashfree = async () => {
-      try {
-        const cashfreeInstance = await load({
-          mode: "sandbox",
-        });
-        setCashfree(cashfreeInstance);
-      } catch (error) {
-        console.error("Failed to initialize Cashfree:", error);
-        toast.error("Failed to initialize payment system");
-      }
+    const loadRazorpayScript = async () => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      document.body.appendChild(script);
     };
-    initializeCashfree();
+    loadRazorpayScript();
   }, []);
 
-  const getSessionId = async (): Promise<string | null> => {
-    try {
-      const res = await axios.post<PaymentSessionResponse>("/api/payment", {
-        plan,
-        price,
-      });
-      if (res.data && res.data.payment_session_id) {
-        console.log("Payment session created:", res.data);
-        localStorage.setItem("currentOrderId", res.data.order_id);
-        console.log("Order ID saved to localStorage:", res.data.order_id);
-        return res.data.payment_session_id;
-      }
-      return null;
-    } catch (error) {
-      console.error("Error getting session ID:", error);
-      toast.error("Failed to create payment session");
-      return null;
-    }
-  };
-
-  const verifyPayment = async () => {
-    const storedOrderId = localStorage.getItem("currentOrderId");
-    console.log(
-      "Verifying payment. Retrieved orderId from localStorage:",
-      storedOrderId,
-    );
-    if (!storedOrderId) {
-      console.error("Order ID is missing from localStorage");
-      toast.error("Order ID is missing. Cannot verify payment.");
-      return;
-    }
-    try {
-      const res = await axios.post<PaymentVerificationResponse>("/api/verify", {
-        orderId: storedOrderId,
-      });
-      if (res.data && res.data.order_status === "PAID") {
-        toast.success("Payment verified successfully");
-        if (!session?.user?.id) {
-          throw new Error("User ID is missing");
-        }
-        const updateRes = await axios.post<SubscriptionUpdateResponse>(
-          "/api/update-subscription",
-          {
-            userId: session.user.id,
-            newStatus: "pro",
-            plan: plan,
-          },
-        );
-        if (updateRes.data.success) {
-          toast.success("Subscription updated successfully");
-          localStorage.removeItem("currentOrderId");
-          router.push("/f");
-        } else {
-          toast.error("Failed to update subscription");
-        }
-      } else {
-        toast.error("Payment verification failed");
-      }
-    } catch (error) {
-      console.error("Error verifying payment or updating subscription:", error);
-      toast.error("Failed to verify payment or update subscription");
+  const calculateEndDate = (plan: string): Date => {
+    const now = new Date();
+    switch (plan) {
+      case 'weekly':
+        return new Date(now.setDate(now.getDate() + 7));
+      case 'monthly':
+        return new Date(now.setMonth(now.getMonth() + 1));
+      case 'yearly':
+        return new Date(now.setFullYear(now.getFullYear() + 1));
+      default:
+        throw new Error('Invalid plan');
     }
   };
 
@@ -118,40 +46,61 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
       return;
     }
 
-    if (!cashfree) {
-      toast.error("Payment system not initialized");
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const sessionId = await getSessionId();
-      if (!sessionId) {
-        throw new Error("Failed to get payment session ID");
-      }
+      const response = await axios.post('/api/create-subscription', {
+        userId: session.user.id,
+        plan: plan
+      });
+      console.log(response.data);
+      
+      const { id: subscriptionId } = response.data;
 
-      console.log(
-        "Before checkout. OrderId from localStorage:",
-        localStorage.getItem("currentOrderId"),
-      );
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        subscription_id: subscriptionId,
+        name: 'DocXpert',
+        description: `${plan} Subscription`,
+        handler: async (response: any) => {
+          const result = await axios.post('/api/verify-payment', {
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_subscription_id: response.razorpay_subscription_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+          if (result.data.success) {
+            const startDate = new Date();
+            const endDate = calculateEndDate(plan);
+            
+            const updateResult = await axios.post('/api/update-subscription', {
+              userId: session.user.id,
+              subscriptionId: subscriptionId,
+              subscriptionPlan: 'PRO',
+              subscriptionStartDate: startDate,
+              subscriptionEndDate: endDate,
+              subscriptionStatus: 'active'
+            });
 
-      const checkoutOptions = {
-        paymentSessionId: sessionId,
-        redirectTarget: "_modal",
+            if (updateResult.data.success) {
+              console.log('Subscription details:', updateResult.data.user);
+              toast.success("Subscription successful!");
+              router.push("/f");
+            } else {
+              toast.error("Failed to update subscription details");
+            }
+          } else {
+            toast.error("Subscription verification failed");
+          }
+        },
+        prefill: {
+          email: session.user?.email,
+        },
+        theme: {
+          color: '#10B981',
+        },
       };
 
-      const result = await cashfree.checkout(checkoutOptions);
-      if (result.error) {
-        console.error("Payment error:", result.error);
-        toast.error("Payment failed. Please try again.");
-      } else if (result.paymentDetails) {
-        console.log("Payment completed:", result.paymentDetails);
-        console.log(
-          "After checkout. OrderId from localStorage:",
-          localStorage.getItem("currentOrderId"),
-        );
-        await verifyPayment();
-      }
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
     } catch (error) {
       console.error("Upgrade error:", error);
       toast.error("Failed to initiate upgrade. Please try again.");
@@ -164,7 +113,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
     <Button onClick={handleUpgrade} disabled={isLoading}>
       {isLoading
         ? "Processing..."
-        : `Upgrade to ${plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "Pro"} - $${price}`}
+        : `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} - $${price}`}
     </Button>
   );
 };

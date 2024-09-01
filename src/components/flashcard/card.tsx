@@ -79,7 +79,7 @@ const IndividualFlashcard = ({
       console.log(err.message);
 
       toast.error("Something went wrong with text generation", {
-        duration: 3000,
+        duration: 6000,
       });
     },
     api: "/api/evaluate",

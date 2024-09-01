@@ -26,15 +26,29 @@ model Account {
 }
 
 model User {
-  id                        String             @id @default(cuid())
-  name                      String
-  email                     String?            @unique
-  emailVerified             DateTime?
-  image                     String?
-  accounts                  Account[]
-  documents                 Document[]
-  messages                  Message[]
+  id                       String              @id @default(cuid())
+  name                     String?
+  email                    String?             @unique
+  emailVerified            DateTime?
+  image                    String?
+  subscriptionId           String?
+  subscriptionPlan         String?
+  subscriptionStartDate    DateTime?
+  subscriptionEndDate      DateTime?
+  subscriptionStatus       String?
+  accounts                 Account[]
+  documents                Document[]
+  messages                 Message[]
   collaboratorateddocuments Collaborator[]
+
+  createdAt                DateTime            @default(now())
+  feedbacks                Feedback[]
+  flashcardAttempts        FlashcardAttempt[]
+  plan                     Plan                @default(FREE)
+  phone                    String?
+  questionResponses        QuestionResponse[]
+  searchResponses          SearchResponse[]
+=======
   createdAt                 DateTime           @default(now())
   feedbacks                 Feedback[]
   flashcardAttempts         FlashcardAttempt[]
@@ -43,6 +57,7 @@ model User {
   questionResponses         QuestionResponse[]
  searchResponses            SearchResponse[]
  
+
 }
 
 enum Plan {
@@ -51,24 +66,29 @@ enum Plan {
 }
 
 model Document {
-  url           String         @unique
-  id            String         @id @default(cuid())
-  title         String
-  owner         User           @relation(fields: [ownerId], references: [id])
-  highlights    Highlight[]
-  collaborators Collaborator[] @relation("DocumentCollaborators")
-  ownerId       String
-  note          String?        @db.Text
-  messages      Message[]
-  isVectorised  Boolean        @default(false)
-  createdAt     DateTime       @default(now())
-  isUploaded    Boolean        @default(true)
-  flashcards    Flashcard[]
+  url                String               @unique
+  id                 String               @id @default(cuid())
+  title              String
+  owner              User                 @relation(fields: [ownerId], references: [id])
+  highlights         Highlight[]
+  collaborators      Collaborator[]       @relation("DocumentCollaborators")
+  ownerId            String
+  note               String?              @db.Text
+  messages           Message[]
+  isVectorised       Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  isUploaded         Boolean              @default(true)
+  flashcards         Flashcard[]
   generatedQuestions GeneratedQuestion[]  @relation("DocumentToGeneratedQuestion")
+
+  questionResponses  QuestionResponse[]
+  questions          Question[]
+
   questionResponses QuestionResponse[]
    counts             DocumentCounts?
   questions    Question[]
   
+
 }
 
 model DocumentCounts {
@@ -84,21 +104,20 @@ model DocumentCounts {
 }
 
 model Question {
-  id         String   @id @default(cuid())
+  id         String             @id @default(cuid())
   question   String
-   answer     String  
+  answer     String  
   marks      Int
   type       String
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document   Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
   documentId String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime           @default(now())
   responses  QuestionResponse[]
 }
 
 model QuestionResponse {
   id         String   @id @default(cuid())
   query      String
-  
   response   String   @db.Text
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   questionId String
@@ -136,6 +155,7 @@ model Message {
   documentId    String
   isUserMessage Boolean
 }
+
 model SearchResponse {
   id              String   @id @default(cuid())
   userId          String
@@ -147,8 +167,6 @@ model SearchResponse {
   createdAt       DateTime @default(now())
   user            User     @relation(fields: [userId], references: [id])
 }
-
-
 
 enum HighlightTypeEnum {
   TEXT
@@ -207,25 +225,20 @@ model FlashcardAttempt {
   flashcardId       String
   user              User      @relation(fields: [userId], references: [id])
   userId            String
-  // option to remove the qn => maybe a hasMemorised boolean
   createdAt         DateTime  @default(now())
-  // What user responded
   userResponse      String
-  // what user got right
   correctResponse   String?
-  // what user got wrong
   incorrectResponse String?
-  // more info about the answer
   moreInfo          String?
 }
 
 model GeneratedQuestion {
-  id          String   @id @default(cuid())
-  questionText String
-  answer       String
-  documentId   String
-  marks        String
-  document     Document @relation("DocumentToGeneratedQuestion", fields: [documentId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  questionText  String
+  answer        String
+  documentId    String
+  marks         String
+  document      Document @relation("DocumentToGeneratedQuestion", fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
