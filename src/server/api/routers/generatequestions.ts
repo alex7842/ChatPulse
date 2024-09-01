@@ -54,6 +54,23 @@ export const questionRouter = createTRPCRouter({
         })),
       });
       console.log("genertaed questions",createdQuestions);
+      await ctx.prisma.document.update({
+        where: { id: input.documentId },
+        data: {
+          counts: {
+            upsert: {
+              create: {
+                questionCount: 1
+              },
+              update: {
+                questionCount: {
+                  increment: 1
+                }
+              }
+            }
+          }
+        }
+      });
       return createdQuestions;
     }),
 
@@ -84,6 +101,7 @@ export const questionRouter = createTRPCRouter({
     });
     return questions;
   }),
+ 
 
 
 });
