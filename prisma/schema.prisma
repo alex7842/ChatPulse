@@ -98,7 +98,6 @@ model Question {
 model QuestionResponse {
   id         String   @id @default(cuid())
   query      String
-  
   response   String   @db.Text
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   questionId String
