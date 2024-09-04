@@ -116,13 +116,20 @@ export async function POST(req: Request, res: Response) {
       });
     },
     onCompletion: async (completion: string) => {
-      await prisma.message.create({
-        data: {
-          text: completion,
-          isUserMessage: false,
-          documentId: docId,
-        },
-      });
+      await prisma.$transaction([
+        prisma.message.create({
+          data: {
+            text: completion,
+            isUserMessage: false,
+            documentId: docId,
+          },
+        }),
+        prisma.documentCounts.upsert({
+          where: { documentId: docId },
+          update: { chatCount: { increment: 1 } },
+          create: { documentId: docId, chatCount: 1 },
+        }),
+      ]);
     },
   });
   return new StreamingTextResponse(stream);

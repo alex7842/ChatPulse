@@ -5,7 +5,6 @@ import { useRouter } from "next/router";
 import { FC, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-
 interface UpgradeButtonProps {
   plan: string;
   price: number;
@@ -53,7 +52,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
         plan: plan
       });
       console.log(response.data);
-      
+     
       const { id: subscriptionId } = response.data;
 
       const options = {
@@ -70,7 +69,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
           if (result.data.success) {
             const startDate = new Date();
             const endDate = calculateEndDate(plan);
-            
+           
             const updateResult = await axios.post('/api/update-subscription', {
               userId: session.user.id,
               subscriptionId: subscriptionId,

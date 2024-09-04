@@ -22,12 +22,12 @@ export const generateSummary = async (fileUrl: string, maxPagesAllowed: number) 
       max_tokens: 2048,
       messages: [
         {
-            role: "system",
-            content: "You are an AI assistant that only provides the top 6 keywords from documents, formatted as an array without any additional explanation.",
+          role: "system",
+          content: "You are an AI assistant that provides exactly 6 keywords from documents, formatted as an array without any additional explanation or commentary.",
         },
         {
-            role: "user",
-            content: `Give me only the top 6 keywords for the following text:\n\n${fullText}\n\nReturn the keywords as an array:`,
+          role: "user",
+          content: `Extract exactly 6 keywords from the following text. No more, no less. Return only the keywords as an array:\n\n${fullText}`,
         },
     ]
     

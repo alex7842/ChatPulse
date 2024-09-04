@@ -34,7 +34,6 @@ const UpgradePlansPage = () => {
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
-
   const pricingItems = [
     {
       plan: "Weekly",
@@ -119,7 +118,7 @@ const UpgradePlansPage = () => {
       ],
     },
   ];
-
+  
   return (
     <>
       {isLoading ? (

@@ -7,7 +7,12 @@ export default withAuth(
     const token = await getToken({ req });
     const isAuth = !!token;
     const isAuthPage = req.nextUrl.pathname.startsWith("/login");
+    const dValue = req.nextUrl.searchParams.get("d");
+    const isDemoPage = dValue === "1";
 
+    if (isDemoPage) {
+      return null; // Allow access to the demo page without authentication
+    }
     if (isAuthPage) {
       if (isAuth) {
         return NextResponse.redirect(new URL("/f", req.url));

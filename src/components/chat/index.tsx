@@ -4,19 +4,24 @@ import { SpinnerCentered } from "@/components/ui/spinner";
 import { api } from "@/lib/api";
 import { useState, useRef, useEffect,useCallback  } from "react";
 import { useChatStore } from "@/lib/store";
+import { useSession } from "next-auth/react";
+import { PLANS } from '@/lib/constants';
 import { cn } from "@/lib/utils";
 import { useChat } from "ai/react";
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { BanIcon, Send, ChevronRight, X, ArrowLeft,Loader2,Search } from "lucide-react";
 import { useRouter } from "next/router";
 import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
+import { Plan } from "@prisma/client";
 const Research: React.FC<{ 
   setisopen: React.Dispatch<React.SetStateAction<boolean>>,
-  docId: string 
-}> = ({ setisopen, docId }) => {
+  docId: string,
+  subscriptionDetails: any, // Replace 'any' with the actual type of subscriptionDetails
+  plan: string // Assuming plan is a string, adjust if it's a different type
+}> = ({ setisopen, docId, subscriptionDetails, plan }) => {
   const [pdfSummary, setPdfSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [pdf, setpdf] = useState(true);
@@ -31,27 +36,72 @@ const Research: React.FC<{
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const organicResultsRef = useRef<HTMLDivElement>(null);
-  const responseRef = useRef<HTMLDivElement>(null);
+  const messageWindowRef = useRef<HTMLDivElement>(null);
+  const [load,setload]=useState(false);
 
-  const { data: previousResponses } = api.research.getPreviousResponses.useQuery();
+
+  const [researchCount, setResearchCount] = useState(0);
+  const { data: previousResponses } = api.research.getPreviousResponses.useQuery({ documentId:docId });
+
   const storeResponseMutation = api.research.storeResponse.useMutation();
+
   const { data: researchResponse, isLoading: researchIsLoading } = api.research.getSummary.useQuery(
     { docId: docId as string },
     { enabled: !!docId, refetchOnWindowFocus: false }
   );
 
+  const incrementResearchCount = api.document.incrementResearchCount.useMutation({
+    onSuccess: (data) => {
+  
+      
+      setResearchCount(newCount => {
+        console.log("New research count:", newCount);
+        return data.researchCount;
+      });
+    },
+  });
+  
+
+
+
+
+
+
+  
   useEffect(() => {
+   
+    
     if (previousResponses) {
       setAllResponses(previousResponses);
+    
+      
+     
     }
+    setload(true)
   }, [previousResponses]);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
 
+  
   useEffect(() => {
-    if (responseRef.current) {
-      responseRef.current.scrollTop = responseRef.current.scrollHeight;
+    if (messageWindowRef.current) {
+      const shouldScroll = 
+        !userHasScrolled || 
+        messageWindowRef.current.scrollTop + messageWindowRef.current.clientHeight === messageWindowRef.current.scrollHeight;
+  
+      if (shouldScroll) {
+        messageWindowRef.current.scrollTop = messageWindowRef.current.scrollHeight;
+      }
     }
-  }, [response]);
-
+  }, [response, previousResponses, allResponses, userHasScrolled]);
+  
+  useEffect(() => {
+    if (messageWindowRef.current) {
+      messageWindowRef.current.scrollTo({
+        top: messageWindowRef.current.scrollHeight,
+        behavior: 'auto'
+      });
+    }
+  }, []);
   const handleScroll = useCallback(() => {
     if (organicResultsRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = organicResultsRef.current;
@@ -61,6 +111,10 @@ const Research: React.FC<{
       }
     }
   }, []);
+  useEffect(() => {
+    console.log("Updated researchCount:", researchCount);
+    setResearchCount(researchCount);
+  }, [researchCount]);
 
   useEffect(() => {
     if (researchResponse) {
@@ -74,6 +128,7 @@ const Research: React.FC<{
     setSelectedImageIndex(index);
     setIsImageModalOpen(true);
   };
+  
 
   const handleSubmit = async () => {
     if (pdfSummary && query) {
@@ -139,8 +194,16 @@ const Research: React.FC<{
           serperNews: serperNewsData,
         };
 
-        await storeResponseMutation.mutateAsync(newResponse);
-
+        await storeResponseMutation.mutateAsync({
+          query: newResponse.query,
+          serperResponse: newResponse.serperResponse,
+          tavilyResponse: newResponse.tavilyResponse,
+          serperVideos: newResponse.serperVideos,
+          serperNews: newResponse.serperNews,
+          documentId: docId as string
+        });
+        
+        await incrementResearchCount.mutateAsync({ documentId: docId });
         setAllResponses(prevResponses => [...prevResponses, newResponse]);
         setSerperResponse(serperData);
         setTavilyResponse(tavilyResult);
@@ -148,6 +211,8 @@ const Research: React.FC<{
         setSerperNews(serperNewsData);
         setQuery('');
         setIsLoading(false);
+
+        console.log("research count",researchCount);
 
         console.log('Serper API Response:', serperData);
         console.log('Tavily API Response:', tavilyResult);
@@ -201,10 +266,27 @@ const Research: React.FC<{
   }
   const handleEnterPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-     
-      handleSubmit();
+      e.preventDefault();
+      if (plan === 'FREE' && 
+          ((researchCount !== null && researchCount >= PLANS.FREE.maxresearch))) {
+        toast.error("Daily limit reached. Come back tomorrow or upgrade to PRO!", { duration: 3000 });
+      } else if (plan=== 'PRO') {
+        if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
+          toast.error("Your PRO subscription has expired. Please renew to continue.", { duration: 3000 });
+        } else if (subscriptionDetails.subscriptionStatus !== 'active') {
+          toast.error("Your PRO subscription is not active. Please check your account.", { duration: 3000 });
+        } else if (
+                   (researchCount !== null && researchCount >= PLANS.PRO.maxresearch)) {
+          toast.error("You've reached the PRO plan limit for today.", { duration: 3000 });
+        } else {
+          handleSubmit();
+        }
+      } else {
+        handleSubmit();
+      }
     }
   };
+  
  
   
   return (
@@ -232,7 +314,14 @@ const Research: React.FC<{
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div ref={messageWindowRef} 
+      onScroll={() => {
+        if (messageWindowRef.current) {
+          const { scrollTop, scrollHeight, clientHeight } = messageWindowRef.current;
+          setUserHasScrolled(scrollTop + clientHeight < scrollHeight);
+        }
+      }}
+      className="flex-1 overflow-y-auto p-4 space-y-6 ">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
             <div className="text-center">
@@ -241,7 +330,8 @@ const Research: React.FC<{
             </div>
           </div>
         )}
-       {allResponses.map((response, index) => (
+        {load ?(
+       allResponses.map((response, index) => (
           <div key={index}>
             {response.tavilyResponse && (
               
@@ -316,7 +406,7 @@ const Research: React.FC<{
                 )}
               </div>
             )}
-            {response.serperVideos && (
+            {response.serperVideos.videos && (
               <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Videos</h3>
                 <div className="grid grid-cols-2 gap-6">
@@ -342,7 +432,7 @@ const Research: React.FC<{
                 </div>
               </div>
             )}
-            {response.serperNews && (
+            {response.serperNews.news.length>0 && (
               <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Recent News</h3>
                 {response.serperNews.news.map((newsItem: { link: string; title: string; snippet: string }, index: number) => (
@@ -355,7 +445,7 @@ const Research: React.FC<{
                 ))}
               </div>
             )}
-            {response.serperResponse && (
+            {response.serperResponse.organic.length>0 && (
               <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
                 {response.serperResponse.organic && (
                   <div className="mb-4">
@@ -386,7 +476,7 @@ const Research: React.FC<{
               </div>
             )}
           </div>
-        ))}
+        ))): (<Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-500" />)}
       </div>
       <div className="p-4 bg-white border-t border-gray-200 sticky bottom-0">
       <div className="flex items-center">
@@ -398,15 +488,43 @@ const Research: React.FC<{
             placeholder="Enter your query"
             className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className={`p-3 bg-blue-500 text-white rounded-r-lg transition-colors ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
-            }`}
-          >
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send/>}
-          </button>
+        <button
+  onClick={(e) => {
+    if (plan === 'FREE' && researchCount >= PLANS.FREE.maxresearch) {
+      e.preventDefault();
+      toast.error("Daily research limit reached. Come back tomorrow or upgrade to PRO!", { duration: 3000 });
+    } else if (plan === 'PRO') {
+      if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
+        e.preventDefault();
+        toast.error("Your PRO subscription has expired. Please renew to continue.", { duration: 3000 });
+      } else if (subscriptionDetails.subscriptionStatus !== 'active') {
+        e.preventDefault();
+        toast.error("Your PRO subscription is not active. Please check your account.", { duration: 3000 });
+      } else if (researchCount >= PLANS.PRO.maxresearch) {
+        e.preventDefault();
+        toast.error("You've reached the PRO plan research limit for today.", { duration: 3000 });
+      } else {
+        handleSubmit();
+      }
+    } else {
+      handleSubmit();
+    }
+  }}
+  className={`group w-fit rounded-ee-md rounded-se-md px-2 ${
+    isLoading ||
+    (plan === 'FREE' && researchCount >= PLANS.FREE.maxresearch) ||
+    (plan === 'PRO' &&
+      (new Date() > new Date(subscriptionDetails.subscriptionEndDate!) ||
+      subscriptionDetails.subscriptionStatus !== 'active' ||
+      researchCount >= PLANS.PRO.maxresearch))
+      ? 'opacity-50'
+      : 'hover:bg-blue-600'
+  }`}
+>
+  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send   size={24} className="text-gray-600 group-hover:text-gray-700"/>}
+</button>
+
+
        </div>
       </div>
     </div>
@@ -416,10 +534,19 @@ const Research: React.FC<{
 export default function Chat({ isVectorised }: { isVectorised: boolean }) {
   const { query } = useRouter();
   const [isopen, setisopen] = useState(false);
- 
-
+  
+  
   const docId = query?.docId as string;
-
+  interface SubscriptionDetails {
+    plan: string;
+    subscriptionEndDate: string | null;
+    subscriptionStatus: string | null;
+    subscriptionStartDate: string | null;
+    subscriptionId: string | null;
+  }
+  
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
   const {
     messages,
     input,
@@ -440,9 +567,55 @@ export default function Chat({ isVectorised }: { isVectorised: boolean }) {
       });
     },
   });
+  
+  const [userPlan, setUserPlan] = useState<string | null>(null);
 
+  const [subscriptionDetails, setSubscriptionDetails] = useState<SubscriptionDetails>({
+    plan: "",
+    subscriptionEndDate: null,
+    subscriptionStatus: null,
+    subscriptionStartDate: null,
+    subscriptionId: null,
+  });
+  const [chatCount, setChatCount] = useState<number | null>(null);
   const { setSendMessage } = useChatStore();
+  const { data: userData, isLoading: isUserLoading } = api.document.getUserPlan.useQuery(
+    { userId: userId as string },
+    {
+      enabled: !!userId,
+      onSuccess: (data: { plan: string }) => {
+        setUserPlan(data.plan );
+      },    }
+  );
+  
+  const { data: subdata, isLoading } = api.document.getSubscriptionDetails.useQuery(
+    { userId: userId as string },
+    {
+      enabled: !!userId,
+      onSuccess: (data) => {
+        setSubscriptionDetails({
+          plan: data.plan || "",
+          subscriptionEndDate: data.subscriptionEndDate ? data.subscriptionEndDate.toISOString() : null,
+          subscriptionStatus: data.subscriptionStatus || null,
+          subscriptionStartDate: data.subscriptionStartDate ? data.subscriptionStartDate.toISOString() : null,
+          subscriptionId: data.subscriptionId || null,
+        });
+      },    }
+  );
 
+const { data: documentCountData, isLoading: isDocumentCountLoading } = api.document.getChatCount.useQuery(
+    { documentId: docId },
+    {
+      enabled: !!docId,
+      onSuccess: (data:{chatCount :number}) => {
+        setChatCount(data.chatCount);
+      },
+      refetchInterval: 60000,
+    }
+);
+
+  console.log("user plan",userPlan,"chatcount",chatCount)
+  console.log("sub details",subscriptionDetails)
   useEffect(() => {
     const sendMessage = (message: string) => {
       append({
@@ -492,7 +665,7 @@ export default function Chat({ isVectorised }: { isVectorised: boolean }) {
     });
 
   const utils = api.useContext();
-
+  
   if (!isVectorised) {
     return (
       <FeatureCard
@@ -528,7 +701,7 @@ export default function Chat({ isVectorised }: { isVectorised: boolean }) {
   return (
     <>
       {isopen ? (
-        <Research setisopen={setisopen} docId={docId} />
+        <Research plan={userPlan ?? ''} subscriptionDetails={subscriptionDetails} setisopen={setisopen} docId={docId} />
       ) : (
         <>
           <div className="flex justify-end mb-5">
@@ -592,38 +765,86 @@ export default function Chat({ isVectorised }: { isVectorised: boolean }) {
             <div className="mt-auto">
               <form onSubmit={handleSubmit}>
                 <div className="mb-2 mt-1 flex w-full">
-                  <TextareaAutosize
-                    maxLength={1000}
-                    placeholder="Enter your question (max 1,000 characters)"
-                    className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 font-normal"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey && !chatIsLoading) {
-                        e.preventDefault();
-                        // @ts-ignore
-                        handleSubmit(e);
-                      } else if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                      }
-                    }}
-                    value={input}
-                    onChange={handleInputChange}
-                    autoFocus
-                    maxRows={4}
-                  />
+                <TextareaAutosize
+  maxLength={1000}
+  placeholder="Enter your question (max 1,000 characters)"
+  className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 font-normal"
+  onKeyDown={(e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) {
+        toast.error("Daily limit reached. Come back tomorrow or upgrade to PRO!", {
+          duration: 3000});
+      } else if (userPlan === 'PRO') {
+        if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
+          toast.error("Your PRO subscription has expired. Please renew to continue.", {
+            duration: 3000});
+        } else if (subscriptionDetails.subscriptionStatus !== 'active') {
+          toast.error("Your PRO subscription is not active. Please check your account.");
+        } else if (chatCount !== null && chatCount >= PLANS.PRO.maxchat) {
+          toast.error("You've reached the PRO plan chat limit for today.", {
+            duration: 3000});
+        } else {
+          // @ts-ignore
+          handleSubmit(e);
+        }
+      } else {
+        // @ts-ignore
+        handleSubmit(e);
+      }
+    }
+  }}
+  value={input}
+  onChange={handleInputChange}
+  autoFocus
+  maxRows={4}
+/>
+
+
                   {chatIsLoading ? (
                     <button className="w-fit px-2">
                       <BanIcon size={24} className="text-gray-500" onClick={stop} />
                     </button>
                   ) : (
                     <button
-                      className="group w-fit rounded-ee-md rounded-se-md px-2"
-                      type="submit"
-                    >
-                      <Send
-                        size={24}
-                        className="text-gray-600 group-hover:text-gray-700"
-                      />
-                    </button>
+                    className={`group w-fit rounded-ee-md rounded-se-md px-2 ${
+                      (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) ||
+                      (userPlan === 'PRO' &&
+                       (new Date() > new Date(subscriptionDetails.subscriptionEndDate!) ||
+                        subscriptionDetails.subscriptionStatus !== 'active' ||
+                        (chatCount !== null && chatCount >= PLANS.PRO.maxchat)))
+                        ? 'opacity-50'
+                        : ''
+                    }`}
+                    type="submit"
+                    onClick={(e) => {
+                      if (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) {
+                        e.preventDefault();
+                        toast.error("Daily limit reached. Come back tomorrow or upgrade to PRO!", {
+                          duration: 3000});
+                      } else if (userPlan === 'PRO') {
+                        if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
+                          e.preventDefault();
+                          toast.error("Your PRO subscription has expired. Please renew to continue.", {
+                            duration: 3000});
+                        } else if (subscriptionDetails.subscriptionStatus !== 'active') {
+                          e.preventDefault();
+                          toast.error("Your PRO subscription is not active. Please check your account.", {
+                            duration: 3000});
+                        } else if (chatCount !== null && chatCount >= PLANS.PRO.maxchat) {
+                          e.preventDefault();
+                          toast.error("You've reached the PRO plan chat limit for today.", {
+                            duration: 3000});
+                        }
+                      }
+                      // If none of the conditions are met, the form will submit normally
+                    }}
+                  >
+                    <Send
+                      size={24}
+                      className="text-gray-600 group-hover:text-gray-700"
+                    />
+                  </button>
                   )}
                 </div>
               </form>

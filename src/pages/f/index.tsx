@@ -39,8 +39,10 @@ const UserLibraryPage = () => {
   ]?.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
 
   const filteredUserDocs = combinedUserDocs?.filter((doc) =>
-    doc.title.trim().toLowerCase().includes(searchQuery.trim().toLowerCase()),
+    doc.title.trim().toLowerCase().includes(searchQuery.trim().toLowerCase()) &&
+    doc.id !== 'cm0iew5b90006n88lkto78r0y'
   );
+  
 
   const handleDeleteClick = (id: string, title: string) => {
     setDocumentToDelete({ id, title });
@@ -176,7 +178,7 @@ const DocCard = ({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-2 top-2 h-8 w-8 text-red-400 hover:bg-red-900/20"
+        className="absolute right-2 top-2 h-8 w-8 text-red-400 hover:bg-red-500"
         onClick={(e) => {
           e.preventDefault();
           onDelete(id, title);

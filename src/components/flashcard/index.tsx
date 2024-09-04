@@ -22,6 +22,7 @@ const Flashcards = () => {
     api.flashcard.generateFlashcards.useMutation();
 
   const utils = api.useContext();
+  const incrementFlashcardCount = api.document.incrementFlashcardCount.useMutation();
 
   if (isLoading) return <SpinnerPage />;
   if (isError || !flashcards) return <div>Something went wrong</div>;
@@ -42,6 +43,7 @@ const Flashcards = () => {
               {
                 onSuccess: () => {
                   utils.flashcard.getFlashcards.refetch();
+                  incrementFlashcardCount.mutate({ documentId });
                 },
                 onError: (err: any) => {
                   toast.error(err.message, {

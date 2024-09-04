@@ -3,6 +3,8 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
 import { PLANS } from "@/lib/constants";
 
+
+
 export const researchRouter = createTRPCRouter({
   storeResponse: protectedProcedure
   .input(z.object({
@@ -11,12 +13,14 @@ export const researchRouter = createTRPCRouter({
     tavilyResponse: z.any(),
     serperVideos: z.any(),
     serperNews: z.any(),
+    documentId: z.string()
   }))
   .mutation(async ({ ctx, input }) => {
     try {
       const result = await ctx.prisma.searchResponse.create({
         data: {
           userId: ctx.session.user.id,
+          docid: input.documentId,
           query: input.query,
           serperResponse: input.serperResponse,
           tavilyResponse: input.tavilyResponse,
@@ -31,15 +35,19 @@ export const researchRouter = createTRPCRouter({
       throw error;
     }
   }),
-
-
   getPreviousResponses: protectedProcedure
-  .query(async ({ ctx }) => {
+  .input(z.object({ documentId: z.string() }))
+  .query(async ({ ctx, input }) => {
     return ctx.prisma.searchResponse.findMany({
-      where: { userId: ctx.session.user.id },
+      where: { 
+        userId: ctx.session.user.id,
+        docid: input.documentId
+      },
       orderBy: { createdAt: 'asc' },
     });
   }),
+
+
 
   getSummary: protectedProcedure
     .input(

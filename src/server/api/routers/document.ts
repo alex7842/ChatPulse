@@ -1,108 +1,286 @@
 import { PLANS } from "@/lib/constants";
 import { vectoriseDocument } from "@/lib/vectorise";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure,publicProcedure } from "@/server/api/trpc";
+
+
 import { CollaboratorRole } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { useRouter } from 'next/router';
 
 export const documentRouter = createTRPCRouter({
-  getDocData: protectedProcedure
-    .input(
-      z.object({
-        docId: z.string(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const res = await ctx.prisma.document.findUnique({
-        where: {
-          id: input.docId,
-          OR: [
-            { ownerId: ctx.session.user.id },
-            {
-              collaborators: {
-                some: {
-                  userId: ctx.session.user.id,
-                },
-              },
-            },
-          ],
-        },
 
-        include: {
-          highlights: {
-            include: {
-              boundingRectangle: true,
-              rectangles: true,
-            },
+  getDocDataDemo: publicProcedure
+  .input(z.object({ docId: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const res = await ctx.prisma.document.findUnique({
+      where: { id: input.docId },
+      include: {
+        highlights: {
+          include: {
+            boundingRectangle: true,
+            rectangles: true,
           },
-          owner: true,
-          collaborators: {
-            include: {
-              user: true,
-            },
+        },
+        collaborators: {
+          include: { user: true },
+        },
+      },
+    });
+
+    if (!res) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Document not found.",
+      });
+    }
+
+    const highlightData = res.highlights.map((highlight) => ({
+      id: highlight.id,
+      position: {
+        boundingRect: {
+          id: highlight.boundingRectangle?.id,
+          x1: highlight.boundingRectangle?.x1,
+          y1: highlight.boundingRectangle?.y1,
+          x2: highlight.boundingRectangle?.x2,
+          y2: highlight.boundingRectangle?.y2,
+          width: highlight.boundingRectangle?.width,
+          height: highlight.boundingRectangle?.height,
+          pageNumber: highlight.boundingRectangle?.pageNumber,
+        },
+        rects: highlight.rectangles.map((rect) => ({
+          id: rect.id,
+          x1: rect.x1,
+          y1: rect.y1,
+          x2: rect.x2,
+          y2: rect.y2,
+          width: rect.width,
+          height: rect.height,
+          pageNumber: rect.pageNumber,
+        })),
+        pageNumber: highlight.pageNumber,
+      },
+    }));
+
+    return {
+      id: res.id,
+      title: res.title,
+      highlights: highlightData,
+      owner: null,
+      collaborators: [],
+      messages: [],
+      url: res.url,
+      isVectorised: res.isVectorised,
+      userPermissions: {
+        canEdit: false,
+        username: "Demo User",
+        isOwner: false,
+      },
+    };
+  }),
+
+
+  getDocData: protectedProcedure
+  .input(z.object({ docId: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const res = await ctx.prisma.document.findUnique({
+      where: {
+        id: input.docId,
+        OR: [
+          { ownerId: ctx.session.user.id },
+          { collaborators: { some: { userId: ctx.session.user.id } } },
+        ],
+      },
+      include: {
+        highlights: {
+          include: {
+            boundingRectangle: true,
+            rectangles: true,
           },
-          messages: true,
+        },
+        owner: true,
+        collaborators: {
+          include: { user: true },
+        },
+        messages: true,
+      },
+    });
+
+    if (!res) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Document not found or you do not have access to it.",
+      });
+    }
+
+    const highlightData = res.highlights.map((highlight) => ({
+      id: highlight.id,
+      position: {
+        boundingRect: {
+          id: highlight.boundingRectangle?.id,
+          x1: highlight.boundingRectangle?.x1,
+          y1: highlight.boundingRectangle?.y1,
+          x2: highlight.boundingRectangle?.x2,
+          y2: highlight.boundingRectangle?.y2,
+          width: highlight.boundingRectangle?.width,
+          height: highlight.boundingRectangle?.height,
+          pageNumber: highlight.boundingRectangle?.pageNumber,
+        },
+        rects: highlight.rectangles.map((rect) => ({
+          id: rect.id,
+          x1: rect.x1,
+          y1: rect.y1,
+          x2: rect.x2,
+          y2: rect.y2,
+          width: rect.width,
+          height: rect.height,
+          pageNumber: rect.pageNumber,
+        })),
+        pageNumber: highlight.pageNumber,
+      },
+    }));
+
+    const collaborator = res.collaborators.find(
+      (c) => c.userId === ctx.session.user.id
+    );
+
+    const isOwner = res.owner.id === ctx.session.user.id;
+    const canEdit = isOwner || collaborator?.role === CollaboratorRole.EDITOR;
+    const username = isOwner ? res.owner.name : collaborator?.user.name || "";
+
+    return {
+      id: res.id,
+      title: res.title,
+      highlights: highlightData,
+      owner: res.owner,
+      collaborators: res.collaborators,
+      messages: res.messages,
+      url: res.url,
+      isVectorised: res.isVectorised,
+      userPermissions: {
+        canEdit,
+        username,
+        isOwner,
+      },
+    };
+  }),
+
+  incrementFlashcardCount: protectedProcedure
+  .input(z.object({ documentId: z.string() }))
+  .mutation(async ({ ctx, input }) => {
+    await ctx.prisma.documentCounts.upsert({
+      where: { documentId: input.documentId },
+      update: { flashCount: { increment: 1 } },
+      create: { documentId: input.documentId, flashCount: 1 },
+    });
+    return { success: true };
+  }),
+
+  incrementQuestionCount: protectedProcedure
+    .input(z.object({ documentId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.documentCounts.upsert({
+        where: { documentId: input.documentId },
+        update: { questionCount: { increment: 1 } },
+        create: { documentId: input.documentId, questionCount: 1 },
+      });
+      return { success: true };
+    }),
+    getUserPlan: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: input.userId },
+        select: { plan: true },
+      });
+      return {  plan: user?.plan};
+    }),
+
+    getChatCount: protectedProcedure
+  .input(z.object({ documentId: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const now = new Date();
+    const documentCounts = await ctx.prisma.documentCounts.findUnique({
+      where: { documentId: input.documentId },
+    });
+
+    if (documentCounts) {
+      const lastUpdated = new Date(documentCounts.updatedAt);
+      const isNewDay = now.getDate() !== lastUpdated.getDate() || 
+                       now.getMonth() !== lastUpdated.getMonth() || 
+                       now.getFullYear() !== lastUpdated.getFullYear();
+
+      if (isNewDay) {
+        // Reset count if it's a new day
+        await ctx.prisma.documentCounts.update({
+          where: { documentId: input.documentId },
+          data: { chatCount: 0 },
+        });
+        return { chatCount: 0 };
+      }
+    }
+
+    return { chatCount: documentCounts?.chatCount || 0 };
+  }),
+  getSubscriptionDetails: protectedProcedure
+  .input(z.object({ userId: z.string() }))
+  .query(async ({ ctx, input }) => {
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: input.userId },
+      select: {
+        plan: true,
+        subscriptionId: true,
+        subscriptionPlan: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true,
+        subscriptionStatus: true,
+      },
+    });
+
+    const currentDate = new Date();
+
+    if (user?.subscriptionEndDate && user.subscriptionEndDate < currentDate) {
+      // Subscription has ended, update user's plan and status
+      await ctx.prisma.user.update({
+        where: { id: input.userId },
+        data: {
+          plan: 'FREE',
+          subscriptionStatus: 'inactive',
         },
       });
 
-      if (!res) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Document not found or you do not have access to it.",
-        });
-      }
-
-      const highlightData = res.highlights.map((highlight) => ({
-        id: highlight.id,
-        position: {
-          boundingRect: {
-            id: highlight.boundingRectangle?.id,
-            x1: highlight.boundingRectangle?.x1,
-            y1: highlight.boundingRectangle?.y1,
-            x2: highlight.boundingRectangle?.x2,
-            y2: highlight.boundingRectangle?.y2,
-            width: highlight.boundingRectangle?.width,
-            height: highlight.boundingRectangle?.height,
-            pageNumber: highlight.boundingRectangle?.pageNumber,
-          },
-          rects: highlight.rectangles.map((rect) => ({
-            id: rect.id,
-            x1: rect.x1,
-            y1: rect.y1,
-            x2: rect.x2,
-            y2: rect.y2,
-            width: rect.width,
-            height: rect.height,
-            pageNumber: rect.pageNumber,
-          })),
-          pageNumber: highlight.pageNumber,
-        },
-      }));
-
-      const collaborator = res.collaborators.find(
-        (c) => c.userId === ctx.session.user.id,
-      );
-
-      const isOwner = res.owner.id === ctx.session.user.id;
-      const canEdit = isOwner || collaborator?.role === CollaboratorRole.EDITOR;
-      const username = isOwner ? res.owner.name : collaborator?.user.name || "";
-
       return {
-        id: res.id,
-        title: res.title,
-        highlights: highlightData!,
-        owner: res.owner,
-        collaborators: res.collaborators,
-        messages: res.messages,
-        url: res.url,
-        isVectorised: res.isVectorised,
-        userPermissions: {
-          canEdit,
-          username,
-          isOwner: res.owner.id === ctx.session.user.id,
-        },
+        plan: 'FREE',
+        subscriptionId: null,
+        subscriptionPlan: null,
+        subscriptionStartDate: null,
+        subscriptionEndDate: null,
+        subscriptionStatus: 'inactive',
       };
-    }),
+    }
+
+    return {
+      plan: user?.plan ,
+      subscriptionId: user?.subscriptionId,
+      subscriptionPlan: user?.subscriptionPlan,
+      subscriptionStartDate: user?.subscriptionStartDate,
+      subscriptionEndDate: user?.subscriptionEndDate,
+      subscriptionStatus: user?.subscriptionStatus,
+    };
+  }),
+
+  incrementResearchCount: protectedProcedure
+  .input(z.object({ documentId: z.string() }))
+  .mutation(async ({ ctx, input }) => {
+    const result = await ctx.prisma.documentCounts.upsert({
+      where: { documentId: input.documentId },
+      update: { researchCount: { increment: 1 } },
+      create: { documentId: input.documentId, researchCount: 1 },
+      select: { researchCount: true },
+    });
+    return { success: true, researchCount: result.researchCount };
+  }),
+
 
   addCollaborator: protectedProcedure
     .input(

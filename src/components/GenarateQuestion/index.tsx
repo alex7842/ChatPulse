@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { RoomProvider } from "liveblocks.config";
 import { useRouter } from "next/router";
-import { Copy, Download,FileText,FileUp,FileType2,Pencil} from 'lucide-react';
+import { Copy, Download,FileText,FileUp,FileType2,Pencil, PlusCircle, Loader2} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Document, Packer, Paragraph, HeadingLevel,TextRun } from 'docx';
@@ -40,16 +40,18 @@ const GenerateQuestions = () => {
     refetch
   } = api.question.getGeneratedQuestions.useQuery({ documentId });
   
-
+  
+  const incrementQuestionCount = api.document.incrementQuestionCount.useMutation();
   const { mutate: generateResponse, isLoading: isGeneratingResponse } =
     api.question.generateResponse.useMutation({
       onSuccess: () => {
         refetch();
         toast.success('Questions generated successfully');
+        incrementQuestionCount.mutate({ documentId });
       },
       onError: (err: any) => {
         toast.error(err.message, {
-          duration: 3000,
+          duration: 1000,
         });
       },
     });
@@ -163,43 +165,42 @@ const downloadAllAs = (format: 'copy' | 'pdf' | 'word' | 'markdown') => {
   }
 };
 
-// const TiptapEditor = ({ questions }: { questions: any[] }) => {
-//     const content = questions.map((q, index) => `
-//       <h2>Question ${index + 1}</h2>
-//       <p>${q.questionText}</p>
-//       <h3>Answer</h3>
-//       <p>${q.answer}</p>
-//       <p><strong>Marks:</strong> ${q.marks}</p>
-//     `).join('')
-  
-//     const editor = useEditor({
-//       extensions: [StarterKit],
-//       content: content,
-//       TextAlign.configure({
-//         types: ['heading', 'paragraph'],
-//       }),
-//       Highlight,
-      
-//     })
-  
-//     return <EditorContent editor={editor} />
-//   }
+
   return (
     <div className="h-full flex flex-col space-y-4 p-4">
      
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Generate  Questions and Answers:</h2>
-        <div className="flex space-x-2">
-         
-          <Button
-            onClick={() => {
-              generateResponse({ documentId, question: 'Generate Two marks and five marks with clear explanation' });
-            }}
-            disabled={isGeneratingResponse}
-          >
-            {isGeneratingResponse ? "Generating..." : "Ask"}
-          </Button>
-        </div>
+     <div className="mt-8 bg-grey-700 p-6 rounded-lg shadow-md">
+  <h2 className="text-2xl font-bold mb-4 text-gray-800 border-b-2 border-blue-300 pb-2">Generate Questions and Answers:</h2>
+  <div className="flex space-x-2 items-center">
+    <Button
+      onClick={() => {
+        generateResponse({ documentId, question: 'Generate Two marks and five marks with clear explanation' });
+      }}
+      disabled={isGeneratingResponse}
+      className={`
+        px-6 py-3 rounded-full font-semibold text-white
+        transition-all duration-300 ease-in-out
+        ${isGeneratingResponse 
+          ? 'bg-gray-400 cursor-not-allowed' 
+          : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-1'
+        }
+      `}
+    >
+      {isGeneratingResponse ? (
+        <span className="flex items-center">
+          <Loader2 className="animate-spin mr-2 h-5 w-5" />
+          Generating...
+        </span>
+      ) : (
+        <span className="flex items-center">
+          <PlusCircle className="mr-2 h-5 w-5" />
+          Ask
+        </span>
+      )}
+    </Button>
+  </div>
+
+
 
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-4xl h-[80vh] overflow-y-auto ">

@@ -48,14 +48,6 @@ model User {
   phone                    String?
   questionResponses        QuestionResponse[]
   searchResponses          SearchResponse[]
-=======
-  createdAt                 DateTime           @default(now())
-  feedbacks                 Feedback[]
-  flashcardAttempts         FlashcardAttempt[]
-  plan                      Plan               @default(FREE)
-  phone                     String?
-  questionResponses         QuestionResponse[]
- searchResponses            SearchResponse[]
  
 
 }
@@ -84,9 +76,9 @@ model Document {
   questionResponses  QuestionResponse[]
   questions          Question[]
 
-  questionResponses QuestionResponse[]
+ 
    counts             DocumentCounts?
-  questions    Question[]
+  
   
 
 }
@@ -158,6 +150,7 @@ model Message {
 
 model SearchResponse {
   id              String   @id @default(cuid())
+  docid           String
   userId          String
   query           String
   serperResponse  Json?

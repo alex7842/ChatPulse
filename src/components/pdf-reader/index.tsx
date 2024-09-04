@@ -32,7 +32,7 @@ const DocViewer = ({
   doc,
 }: {
   canEdit: boolean;
-  doc: inferRouterOutputs<AppRouter>["document"]["getDocData"];
+  doc: inferRouterOutputs<AppRouter>["document"]["getDocData"]| inferRouterOutputs<AppRouter>["document"]["getDocDataDemo"];
 }) => {
   const { query, isReady } = useRouter();
 
