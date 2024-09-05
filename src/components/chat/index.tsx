@@ -8,14 +8,23 @@ import { useSession } from "next-auth/react";
 import { PLANS } from '@/lib/constants';
 import { cn } from "@/lib/utils";
 import { useChat } from "ai/react";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
-import { BanIcon, Send, ChevronRight, X, ArrowLeft,Loader2,Search } from "lucide-react";
+import { BanIcon, Send, ChevronRight, X, ArrowLeft,Loader2,Search, CopyIcon, DeleteIcon, Trash } from "lucide-react";
 import { useRouter } from "next/router";
 import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
 import { Plan } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "../ui/button";
 const Research: React.FC<{ 
   setisopen: React.Dispatch<React.SetStateAction<boolean>>,
   docId: string,
@@ -264,12 +273,27 @@ const Research: React.FC<{
     const data = await response.json();
     return data;
   }
+  const router=useRouter();
   const handleEnterPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (plan === 'FREE' && 
           ((researchCount !== null && researchCount >= PLANS.FREE.maxresearch))) {
-        toast.error("Daily limit reached. Come back tomorrow or upgrade to PRO!", { duration: 3000 });
+            toast.error(
+              <div>
+                <p className=" text-lg leading-relaxed text-gray-700">{`Daily limit ${PLANS.FREE.maxresearch} queries reached. Come back tomorrow or upgrade to PRO!`}</p>
+                <Button 
+                  onClick={() => router.push('/upgrade-plans')} 
+                  variant="default"
+                  className="mt-1"
+                >
+                  Upgrade Now
+                </Button>
+              </div>,
+              {
+                duration: 1000,
+              }
+            );
       } else if (plan=== 'PRO') {
         if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
           toast.error("Your PRO subscription has expired. Please renew to continue.", { duration: 3000 });
@@ -492,7 +516,21 @@ const Research: React.FC<{
   onClick={(e) => {
     if (plan === 'FREE' && researchCount >= PLANS.FREE.maxresearch) {
       e.preventDefault();
-      toast.error("Daily research limit reached. Come back tomorrow or upgrade to PRO!", { duration: 3000 });
+      toast.error(
+        <div>
+          <p className=" text-lg leading-relaxed text-gray-700">{`Daily limit ${PLANS.FREE.maxresearch} queries reached. Come back tomorrow or upgrade to PRO!`}</p>
+          <Button 
+            onClick={() => router.push('/upgrade-plans')} 
+            variant="default"
+            className="mt-1"
+          >
+            Upgrade Now
+          </Button>
+        </div>,
+        {
+          duration: 1000,
+        }
+      );
     } else if (plan === 'PRO') {
       if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
         e.preventDefault();
@@ -555,6 +593,7 @@ export default function Chat({ isVectorised }: { isVectorised: boolean }) {
     isLoading: chatIsLoading,
     stop,
     error,
+    setMessages,
     append,
   } = useChat({
     body: {
@@ -567,9 +606,12 @@ export default function Chat({ isVectorised }: { isVectorised: boolean }) {
       });
     },
   });
-  
-  const [userPlan, setUserPlan] = useState<string | null>(null);
+ 
 
+const router = useRouter();
+  const [userPlan, setUserPlan] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
   const [subscriptionDetails, setSubscriptionDetails] = useState<SubscriptionDetails>({
     plan: "",
     subscriptionEndDate: null,
@@ -577,6 +619,26 @@ export default function Chat({ isVectorised }: { isVectorised: boolean }) {
     subscriptionStartDate: null,
     subscriptionId: null,
   });
+ const[load,setload]=useState(false);
+  
+ 
+  const deleteChatsMutation = api.document.deleteAllChats.useMutation({
+    onSuccess: () => {
+      toast.success("Chat history deleted successfully");
+      setIsOpen(false);
+      setload(false);
+      setMessages([]);
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete chat history: ${error.message}`);
+    },
+  });
+
+  const handleDeleteChats = () => {
+   
+    deleteChatsMutation.mutate();
+    setload(true);
+  };
   const [chatCount, setChatCount] = useState<number | null>(null);
   const { setSendMessage } = useChatStore();
   const { data: userData, isLoading: isUserLoading } = api.document.getUserPlan.useQuery(
@@ -693,6 +755,17 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
       />
     );
   }
+ const copyToClipboard = (content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      toast.error(`Copied!`, {
+        duration: 1000});
+      console.log('Message copied to clipboard');
+      // You can add a toast notification here if desired
+    }).catch((err) => {
+      console.error('Failed to copy message: ', err);
+    });
+  };
+
 
   if (isChatsLoading) {
     return <SpinnerCentered />;
@@ -704,63 +777,108 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
         <Research plan={userPlan ?? ''} subscriptionDetails={subscriptionDetails} setisopen={setisopen} docId={docId} />
       ) : (
         <>
-          <div className="flex justify-end mb-5">
-            <button
-              onClick={() => setisopen(true)}
-              className="flex fixed z-[2] items-center text-sm font-medium text-gray-600 hover:text-gray-800"
-            >
-              Resources <Search className="ml-1 h-4 w-4" />
-            </button>
-          </div>
-          <div className="flex h-full w-full flex-col overflow-hidden">
-            <div
-              className="hideScrollbar flex-1 overflow-auto"
-              ref={messageWindowRef}
-            >
-              {[
-                {
-                  id: "id",
-                  content:
-                    "Welcome to **ChatPulse**! I'm here to assist you. Feel free to ask questions or discuss topics based on the data provided. Whether it's clarifying information, diving deeper into a subject, or exploring related topics, I'm ready to help. Let's make the most out of your learning!",
-                  role: "assistant",
-                },
-                ...(prevChatMessages ?? []),
-                ...messages,
-              ].map((m) => (
-                <div
-                  key={m.id}
-                  className={cn(
-                "flex",
-    m.role === "user" ? "justify-end" : "justify-start",
-    "w-full mb-3",
-                    m.role === "assistant" && "mr-auto",
-                    "max-w-[100%] text-left mb-3"
-                  )}
-                >
-                  <ReactMarkdown
-                    className={cn(
-                      m.role === "user" &&
-                        "bg-blue-500  text-gray-50 prose-code:text-gray-100  text-left ml-auto" ,
-                      m.role === "assistant" && "bg-gray-100",
-                      "prose rounded-xl px-3 py-1 prose-ul:pl-2 prose-li:px-2"
-                    )}
-                  >
-                    {m.content}
-                  </ReactMarkdown>
-                </div>
-              ))}
+        
+        <div className="flex justify-end mb-5 items-center">
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <button className="mr-4 text-sm font-medium text-red-600 hover:text-red-800 border  rounded px-2 py-1">
+     Delete 
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Are you sure you want to delete chat history?</DialogTitle>
+        </DialogHeader>
+        <p>This action will delete your entire chat history. This action cannot be undone.</p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button variant="destructive" onClick={handleDeleteChats}> {!load ? (
+  <p>Delete</p>
+) : (
+  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+)}
+  </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   
-              {chatIsLoading && messages.at(-1)?.role === "user" && (
-                <div
-                  className={cn(
-                    "mr-auto bg-gray-100 text-black",
-                    "max-w-[10%] rounded-xl px-3 py-2 text-left"
-                  )}
-                >
-                  <BouncingLoader />
-                </div>
-              )}
-            </div>
+
+    <button
+  onClick={() => setisopen(true)}
+  className="flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-300 rounded-full shadow-md hover:shadow-lg transform hover:scale-105"
+>
+  <Search className="mr-2 h-4 w-4" />
+  Resources
+</button>
+
+</div>
+
+
+          <div className="flex h-full w-full flex-col overflow-hidden">
+          <div
+  className="hideScrollbar flex-1 overflow-auto"
+  ref={messageWindowRef}
+>
+  {[
+    {
+      id: "id",
+      content:
+        "Welcome to **ChatPulse**! I'm here to assist you. Feel free to ask questions or discuss topics based on the data provided. Whether it's clarifying information, diving deeper into a subject, or exploring related topics, I'm ready to help. Let's make the most out of your learning!",
+      role: "assistant",
+    },
+    ...(prevChatMessages ?? []),
+    ...messages,
+  ].map((m) => (
+    <div
+      key={m.id}
+      className={cn(
+        "flex",
+        m.role === "user" ? "justify-end" : "justify-start",
+        "w-full mb-3",
+        m.role === "assistant" && "mr-auto",
+        "max-w-[100%] text-left mb-3"
+      )}
+    >
+   <div className="relative">
+  <ReactMarkdown
+    className={cn(
+      m.role === "user" &&
+        "bg-blue-500 text-gray-50 prose-code:text-gray-100 text-left ml-auto",
+      m.role === "assistant" && "bg-gray-100",
+      "prose rounded-xl px-3 py-1 prose-ul:pl-2 prose-li:px-2",
+      m.role === "assistant" && "mb-6" // Added mb-6 for bottom margin only for assistant messages
+    )}
+  >
+    {m.content}
+  </ReactMarkdown>
+  {m.role === "assistant" && (
+    <div className="absolute bottom-1 left-1 flex space-x-3">
+      <button
+        onClick={() => copyToClipboard(m.content)}
+        className="text-gray-500 hover:text-gray-700"
+      >
+        <CopyIcon className="w-4 h-4" />
+      </button>
+     
+    </div>
+  )}
+</div>
+
+    </div>
+  ))}
+
+  {chatIsLoading && messages.at(-1)?.role === "user" && (
+    <div
+      className={cn(
+        "mr-auto bg-gray-100 text-black",
+        "max-w-[10%] rounded-xl px-3 py-2 text-left"
+      )}
+    >
+      <BouncingLoader />
+    </div>
+  )}
+</div>
+
   
             <div className="mt-auto">
               <form onSubmit={handleSubmit}>
@@ -773,8 +891,21 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) {
-        toast.error("Daily limit reached. Come back tomorrow or upgrade to PRO!", {
-          duration: 3000});
+        toast.error(
+          <div>
+            <p className=" text-lg leading-relaxed text-gray-700">{`Daily limit ${PLANS.FREE.maxchat} queries reached. Come back tomorrow or upgrade to PRO!`}</p>
+            <Button 
+              onClick={() => router.push('/upgrade-plans')} 
+              variant="default"
+              className="mt-1"
+            >
+              Upgrade Now
+            </Button>
+          </div>,
+          {
+            duration: 1000,
+          }
+        );
       } else if (userPlan === 'PRO') {
         if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
           toast.error("Your PRO subscription has expired. Please renew to continue.", {
@@ -820,8 +951,23 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
                     onClick={(e) => {
                       if (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) {
                         e.preventDefault();
-                        toast.error("Daily limit reached. Come back tomorrow or upgrade to PRO!", {
-                          duration: 3000});
+                        toast.error(
+                          <div>
+                            <p className=" text-lg leading-relaxed text-gray-700">{`Daily limit ${PLANS.FREE.maxchat} queries reached. Come back tomorrow or upgrade to PRO!`}</p>
+                            <Button 
+                              onClick={() => router.push('/upgrade-plans')} 
+                              variant="default"
+                              className="mt-1"
+                            >
+                              Upgrade Now
+                            </Button>
+                          </div>,
+                          {
+                            duration: 1000,
+                          }
+                        );
+                                                      
+                                          
                       } else if (userPlan === 'PRO') {
                         if (new Date() > new Date(subscriptionDetails.subscriptionEndDate!)) {
                           e.preventDefault();

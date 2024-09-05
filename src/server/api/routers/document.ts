@@ -280,7 +280,25 @@ export const documentRouter = createTRPCRouter({
     });
     return { success: true, researchCount: result.researchCount };
   }),
+  deleteAllChats: protectedProcedure
+  .mutation(async ({ ctx }) => {
+    try {
+      await ctx.prisma.message.deleteMany({
+        where: {
+          document: {
+            ownerId: ctx.session.user.id,
+          },
+        },
+      });
 
+      return { success: true };
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to delete chat history",
+      });
+    }
+  }),
 
   addCollaborator: protectedProcedure
     .input(
