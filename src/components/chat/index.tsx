@@ -430,7 +430,7 @@ const Research: React.FC<{
                 )}
               </div>
             )}
-            {response.serperVideos.videos && (
+            {response.serperVideos.videos.length>0 && (
               <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Videos</h3>
                 <div className="grid grid-cols-2 gap-6">
