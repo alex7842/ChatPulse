@@ -33,7 +33,7 @@ export const PLANS: Record<Plan, PlanData> = {
   },
   PRO: {
     title: "Pro",
-    price: 9.99,
+    price: 10,
     maxchat:Infinity,
     maxDocs: Infinity,
     maxPagesPerDoc: 50,

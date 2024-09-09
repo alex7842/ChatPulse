@@ -39,7 +39,7 @@ const UpgradePlansPage = () => {
   const pricingItems = [
     {
       plan: "Weekly",
-      price: 2.99,
+      price: 5,
       tagline: "For short-term projects.",
       quota: PLANS.PRO.maxDocs,
       features: [
@@ -91,7 +91,7 @@ const UpgradePlansPage = () => {
     },
     {
       plan: "Yearly",
-      price: PLANS.PRO.price * 10,
+      price: 90,
       tagline: "For long-term savings.",
       quota: PLANS.PRO.maxDocs * 12,
       features: [

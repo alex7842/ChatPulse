@@ -57,7 +57,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
   const getAmount = (plan: string): number => {
     switch (plan) {
       case 'weekly':
-        return 2;
+        return 400;
       case 'monthly':
         return 800;
       case 'yearly':
@@ -151,7 +151,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
       ? "Processing..."
       : isDisabled
       ? "Already Subscribed"
-      : `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} - ${price}`}
+      : `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} - $${price}`}
   </Button>
   );
 };
