@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     });
 
     const options = {
-        amount: price * 100, // amount in paise
+        amount: price*100, // amount in paise
         currency: "INR",
         receipt: "order_rcptid_" + Date.now(),
         notes: {

@@ -2,26 +2,31 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { RoomProvider } from "liveblocks.config";
+import Link from "next/link";
+
+
 import {
   ReactSketchCanvas,
   type ReactSketchCanvasRef,
 } from "react-sketch-canvas";
 import { useRef } from "react";
-import { AlbumIcon, Download, Layers, MessagesSquareIcon, FileQuestion, Brush, ArrowLeft } from "lucide-react";
+import { AlbumIcon, Download, Layers, MessagesSquareIcon, FileQuestion, Brush, ArrowLeft, Crown,Lock } from "lucide-react";
 import { saveAs } from "file-saver";
-
+import { api } from "@/lib/api";
 import Chat from "@/components/chat";
 import Editor from "@/components/editor";
 import Flashcards from "@/components/flashcard";
 import GenerateQuestions from "../GenarateQuestion";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { SpinnerPage } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CustomTooltip } from "@/components/ui/tooltip";
 import { useBlocknoteEditorStore } from "@/lib/store";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import InviteCollab from "./invite-collab-modal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const TABS = [
   {
@@ -168,7 +173,20 @@ const Sidebar = ({
   const [activeIndex, setActiveIndex] = useState(
     tab && tabNames.includes(tab) ? tab : "notes",
   );
-
+  const { data: session } = useSession();
+  const[ispro,setispro]=useState(true);
+  const { data: subscriptionDetails, isLoading: isSubscriptionLoading } = api.document.getSubscriptionDetails.useQuery(
+    { userId: session?.user?.id ?? '' },
+    { enabled: !!session?.user?.id }
+  );
+  
+  useEffect(() => {
+    if (subscriptionDetails) {
+      const isPro = subscriptionDetails.plan==='PRO';
+      setispro(isPro);
+    }
+    console.log("subcsription details form button",subscriptionDetails);
+  }, [subscriptionDetails]);
   const handleDownloadMarkdownAsFile = async () => {
     if (!editor) return;
     const markdownContent = await editor.blocksToMarkdownLossy(editor.document);
@@ -219,7 +237,40 @@ const Sidebar = ({
               </CustomTooltip>
             ))}
           </TabsList>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+      
+
+          {ispro ? (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger>
+        <Button className="bg-gradient-to-r from-yellow-400 to-yellow-300" variant="outline" size="icon">
+          <Crown className="h-4 w-4" /> 
+          
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Pro Subscription Active</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+) : (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger>
+         <Link
+                  href="/upgrade-plans">
+        <Button size="sm" className="bg-gray-200 text-gray-700 font-medium px-3 py-1 rounded-full shadow-sm hover:bg-gray-300 transition-all duration-300">
+        <Lock className="h-5 w-5"/>
+        </Button>
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Free Plan</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+)}
             {isOwner && <InviteCollab />}
             <div
               className={cn(

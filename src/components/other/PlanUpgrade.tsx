@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { api } from "@/lib/api";
 import { FC, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,7 +15,21 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+  const [isDisabled, setIsDisabled] = useState(false);
+  const { data: subscriptionDetails, isLoading: isSubscriptionLoading } = api.document.getSubscriptionDetails.useQuery(
+    { userId: session?.user?.id ?? '' },
+    { enabled: !!session?.user?.id }
+  );
 
+  useEffect(() => {
+    if (subscriptionDetails) {
+      const isPro = subscriptionDetails.plan === 'PRO';
+      const isActive = subscriptionDetails.subscriptionStatus === 'active';
+      setIsDisabled(isPro && isActive);
+    }
+    console.log("subcsription details form button",subscriptionDetails);
+  }, [subscriptionDetails]);
+ //console.log("plan",plan);
   useEffect(() => {
     const loadRazorpayScript = async () => {
       const script = document.createElement("script");
@@ -29,6 +44,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
     const now = new Date();
     switch (plan) {
       case 'weekly':
+        console.log("plan in end date",plan);
         return new Date(now.setDate(now.getDate() + 7));
       case 'monthly':
         return new Date(now.setMonth(now.getMonth() + 1));
@@ -36,6 +52,18 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
         return new Date(now.setFullYear(now.getFullYear() + 1));
       default:
         throw new Error('Invalid plan');
+    }
+  };
+  const getAmount = (plan: string): number => {
+    switch (plan) {
+      case 'weekly':
+        return 400;
+      case 'monthly':
+        return 800;
+      case 'yearly':
+        return 8000;
+      default:
+        return 0;
     }
   };
 
@@ -48,7 +76,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
     setIsLoading(true);
     try {
       const response = await axios.post('/api/create-subscription', {
-        price:price,
+        price:getAmount(plan),
         plan: plan
       });
       
@@ -56,7 +84,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: price * 100,
+        amount: getAmount(plan),
         currency: "INR",
         name: 'ChatPulse',
         description: `${plan} Plan`,
@@ -67,13 +95,22 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_signature: response.razorpay_signature,
           });
-          if (result.data.success) {
+          if(result.data.success){
+          
+         
+           if (session && session.user) {
+            const startDate = new Date();
+            const endDate = calculateEndDate(plan);
+            console.log("end date",endDate);
             const updateResult = await axios.post('/api/update-subscription', {
               userId: session.user.id,
-              subscriptionPlan: plan.toUpperCase(),
-              subscriptionStatus: 'active'
+              subscriptionId: response.razorpay_payment_id,
+              subscriptionPlan: "PRO",
+              subscriptionStartDate: startDate,
+              subscriptionEndDate: endDate,
             });
-
+          
+       
             if (updateResult.data.success) {
               console.log('Payment details:', updateResult.data.user);
               toast.success("Payment successful!");
@@ -81,7 +118,9 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
             } else {
               toast.error("Failed to update payment details");
             }
-          } else {
+          } 
+        }
+          else {
             toast.error("Payment verification failed");
           }
         },
@@ -104,11 +143,16 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
   };
 
   return (
-    <Button onClick={handleUpgrade} disabled={isLoading}>
-      {isLoading
-        ? "Processing..."
-        : `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} - $${price}`}
-    </Button>
+    <Button 
+    onClick={handleUpgrade} 
+    disabled={isLoading || isDisabled || isSubscriptionLoading}
+  >
+    {isLoading || isSubscriptionLoading
+      ? "Processing..."
+      : isDisabled
+      ? "Already Subscribed"
+      : `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} - ${price}`}
+  </Button>
   );
 };
 

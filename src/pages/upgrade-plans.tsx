@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import UpgradeButton from "@/components/other/PlanUpgrade";
+import { api } from "@/lib/api";
 
 const Loader = () => (
   <div className="flex justify-center items-center h-screen">
@@ -27,6 +28,7 @@ const UpgradePlansPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
   const user = session?.user;
+  
 
   useEffect(() => {
     const timer = setTimeout(() => {
