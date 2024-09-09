@@ -40,6 +40,7 @@ model User {
   documents                Document[]
   messages                 Message[]
   collaboratorateddocuments Collaborator[]
+  razorpayOrderId         String? @unique
 
   createdAt                DateTime            @default(now())
   feedbacks                Feedback[]

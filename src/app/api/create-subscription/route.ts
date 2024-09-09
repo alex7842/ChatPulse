@@ -3,31 +3,28 @@ import Razorpay from 'razorpay';
 
 export async function POST(request: Request) {
     const body = await request.json();
-    const { plan } = body;
-
+    const { plan, price } = body;
+    console.log("from create subscription",price,plan);
 
     let instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID as string,
         key_secret: process.env.RAZORPAY_SECRET_KEY as string
     });
 
-    const planId = process.env[`${plan.toUpperCase()}_PLAN_ID`] as string;
-
-    if (!planId) {
-        return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
-    }
-
-    const result = await instance.subscriptions.create({
-        plan_id: planId,
-        customer_notify: 1,
-        quantity: 1,
-        total_count: 1,
-        addons: [],
+    const options = {
+        amount: price * 100, // amount in paise
+        currency: "INR",
+        receipt: "order_rcptid_" + Date.now(),
         notes: {
-            key1: 'Note',
             plan: plan
         }
-    });
+    };
 
-    return NextResponse.json(result);
+    try {
+        const order = await instance.orders.create(options);
+        return NextResponse.json(order);
+    } catch (error) {
+        console.error("Error creating order:", error);
+        return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+    }
 }

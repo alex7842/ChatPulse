@@ -48,46 +48,41 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
     setIsLoading(true);
     try {
       const response = await axios.post('/api/create-subscription', {
-        userId: session.user.id,
+        price:price,
         plan: plan
       });
-      console.log(response.data);
-     
-      const { id: subscriptionId } = response.data;
+      
+      const { id: orderId } = response.data;
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        subscription_id: subscriptionId,
-        name: 'DocXpert',
-        description: `${plan} Subscription`,
+        amount: price * 100,
+        currency: "INR",
+        name: 'ChatPulse',
+        description: `${plan} Plan`,
+        order_id: orderId,
         handler: async (response: any) => {
           const result = await axios.post('/api/verify-payment', {
             razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_subscription_id: response.razorpay_subscription_id,
+            razorpay_order_id: response.razorpay_order_id,
             razorpay_signature: response.razorpay_signature,
           });
           if (result.data.success) {
-            const startDate = new Date();
-            const endDate = calculateEndDate(plan);
-           
             const updateResult = await axios.post('/api/update-subscription', {
               userId: session.user.id,
-              subscriptionId: subscriptionId,
-              subscriptionPlan: 'PRO',
-              subscriptionStartDate: startDate,
-              subscriptionEndDate: endDate,
+              subscriptionPlan: plan.toUpperCase(),
               subscriptionStatus: 'active'
             });
 
             if (updateResult.data.success) {
-              console.log('Subscription details:', updateResult.data.user);
-              toast.success("Subscription successful!");
+              console.log('Payment details:', updateResult.data.user);
+              toast.success("Payment successful!");
               router.push("/f");
             } else {
-              toast.error("Failed to update subscription details");
+              toast.error("Failed to update payment details");
             }
           } else {
-            toast.error("Subscription verification failed");
+            toast.error("Payment verification failed");
           }
         },
         prefill: {

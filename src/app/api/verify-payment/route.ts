@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import  prisma  from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 export async function POST(req: Request) {
     const body = await req.json();
-    const { razorpay_subscription_id, razorpay_payment_id, razorpay_signature } = body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
 
-    const sign = razorpay_payment_id + "|" + razorpay_subscription_id;
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSign = crypto
         .createHmac("sha256", process.env.RAZORPAY_SECRET_KEY as string)
         .update(sign.toString())
@@ -14,14 +14,24 @@ export async function POST(req: Request) {
 
     if (razorpay_signature === expectedSign) {
         try {
-            const user = await prisma.user.findFirst({
-                where: { subscriptionId: razorpay_subscription_id }
+            const order = await prisma.user.findUnique({
+                where: { razorpayOrderId: razorpay_order_id }
             });
-
-            if (user) {
+            if (order) {
                 await prisma.user.update({
-                    where: { id: user.id },
-                    data: { subscriptionStatus: 'active' }
+                    where: { id: order.id },
+                    data: { 
+                     
+                        subscriptionId: razorpay_payment_id
+                    }
+                });
+
+                await prisma.user.update({
+                    where: { id: order.id },
+                    data: { 
+                        subscriptionStatus: 'active',
+                        subscriptionPlan: order.plan
+                    }
                 });
             }
 
