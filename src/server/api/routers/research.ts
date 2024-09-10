@@ -28,7 +28,7 @@ export const researchRouter = createTRPCRouter({
           serperNews: input.serperNews,
         },
       });
-      console.log('Successfully stored data:', result);
+      
       return result;
     } catch (error) {
       console.error('Error storing data:', error);

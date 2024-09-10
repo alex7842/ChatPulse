@@ -89,8 +89,8 @@ const DrawingTab: React.FC<{ setShowDrawingTab: React.Dispatch<React.SetStateAct
 
   return (
     <div className="flex-1 overflow-scroll border-stone-200 bg-white sm:rounded-lg sm:border sm:shadow-lg h-[calc(100vh-3.5rem)] w-full">
-      <div className="p-4">
-        <button onClick={() => setShowDrawingTab(false)} className="mb-4">
+      <div className="p-4 ">
+        <button onClick={() => setShowDrawingTab(false)} className="mt-7">
           <ArrowLeft className="h-6 w-6" />
         </button>
         <div className="flex flex-col gap-2 p-2">
@@ -185,7 +185,7 @@ const Sidebar = ({
       const isPro = subscriptionDetails.plan==='PRO';
       setispro(isPro);
     }
-    console.log("subcsription details form button",subscriptionDetails);
+   // console.log("subcsription details form button",subscriptionDetails);
   }, [subscriptionDetails]);
   const handleDownloadMarkdownAsFile = async () => {
     if (!editor) return;
@@ -285,18 +285,18 @@ const Sidebar = ({
         </div>
 
         {[
-          {
-            value: "notes",
-            tw: "flex-1 overflow-scroll border-stone-200 bg-white sm:rounded-lg sm:border sm:shadow-lg h-[calc(100vh-3.5rem)] w-full overflow-scroll",
-            children: (
-              <RoomProvider
-                id={`doc-${documentId}`}
-                initialPresence={{}}
-              >
+         {
+          value: "notes",
+          tw: "flex-1 overflow-scroll border-stone-200 bg-white sm:rounded-lg sm:border sm:shadow-lg h-[calc(100vh-3.5rem)] w-full overflow-scroll",
+          children: (
+            <RoomProvider
+              id={`doc-${documentId}`}
+              initialPresence={{}}
+            >
+              <div className="relative w-full h-full">
                 {!showDrawingTab ? (
                   <>
-                  {/* for drawing */} 
-                     <button onClick={() => setShowDrawingTab(true)} className="mb-4">
+                    <button onClick={() => setShowDrawingTab(true)} className="absolute top-0 right-4 z-10">
                       <Brush size={20} />
                     </button>
                     <ClientSideSuspense fallback={<SpinnerPage />}>
@@ -311,9 +311,10 @@ const Sidebar = ({
                 ) : (
                   <DrawingTab setShowDrawingTab={setShowDrawingTab} />
                 )}
-              </RoomProvider>
-            ),
-          },
+              </div>
+            </RoomProvider>
+          ),
+        },
           {
             value: "chat",
             tw: " p-2 pb-0 break-words border-stone-200 bg-white sm:rounded-lg sm:border sm:shadow-lg h-[calc(100vh-3.5rem)] w-full overflow-scroll ",

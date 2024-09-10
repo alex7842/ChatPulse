@@ -42,7 +42,6 @@ export const generateSummary = async (fileUrl: string, maxPagesAllowed: number) 
     const keywordsString = keywordsArray.join(', ');
     
     
-    console.log("in ai",keywordsString);
     return keywordsString;
   };
   

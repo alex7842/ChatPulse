@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 import {
   ArrowRight,
   Check,
+  ChevronLeftIcon,
   HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
@@ -126,7 +127,22 @@ const UpgradePlansPage = () => {
       {isLoading ? (
         <Loader />
       ) : (
+        <>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-2">
+          <div className="flex flex-col items-start mt-8">
+      <Link
+        href="/"
+        className={cn(
+          buttonVariants({ variant: "ghost" }),
+          "w-fit text-green-500 bg-black"
+        )}
+      >
+        <ChevronLeftIcon className="mr-2 h-4 w-4" />
+        Back
+      </Link>
         <div className="mb-8 mt-24 text-center max-w-5xl mx-auto opacity-0 transition-opacity duration-500 ease-in-out" style={{ opacity: isLoading ? 0 : 1 }}>
+         
+
           <div className="mx-auto mb-10 sm:max-w-lg">
             <h1 className="text-6xl font-bold sm:text-7xl">Upgrade Your Plan</h1>
             <p className="mt-5 text-gray-600 sm:text-lg">
@@ -207,6 +223,9 @@ const UpgradePlansPage = () => {
             </TooltipProvider>
           </div>
         </div>
+        </div>
+        </div>
+        </>
       )}
     </>
   );

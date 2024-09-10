@@ -4,8 +4,7 @@ import Razorpay from 'razorpay';
 export async function POST(request: Request) {
     const body = await request.json();
     const { plan, price } = body;
-    console.log("from create subscription",price,plan);
-
+  
     let instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID as string,
         key_secret: process.env.RAZORPAY_SECRET_KEY as string

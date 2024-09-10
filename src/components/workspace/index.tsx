@@ -1,12 +1,13 @@
 import DocViewer from "@/components/pdf-reader";
-import { type AppRouter } from "@/server/api/root";
 
+import { useState, useEffect } from 'react';
+import { FileText, Menu } from 'lucide-react';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { inferRouterOutputs } from '@trpc/server';
+
 
 import { SpinnerPage } from "@/components/ui/spinner";
 import Sidebar from "@/components/workspace/sidebar";
@@ -17,23 +18,21 @@ import { toast } from "sonner";
 
 const DocViewerPage = () => {
   const { query, push } = useRouter();
-  const isDemo = query.d === '1';
-  console.log("demo value from workspace",query.d);
+  const [showPdfOnMobile, setShowPdfOnMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const {
     data: doc,
     isLoading,
     isError,
     error,
-  } = isDemo
-    ? api.document.getDocDataDemo.useQuery(
-        {
-          docId:"cm0iew5b90006n88lkto78r0y",
-        },
-        {
-          enabled: !!query?.docId,
-        }
-      )
-    : api.document.getDocData.useQuery(
+  } = api.document.getDocData.useQuery(
         {
           docId: query.docId as string,
         },
@@ -52,15 +51,50 @@ const DocViewerPage = () => {
         duration: 3000,
       });
     }
-    return isDemo ? <SpinnerPage /> : <>Something went wrong :( </>;
+    return  <>Something went wrong :( </>;
   }
 
   return (
-    <>
+    (
+<>
+  {isMobile && (
+    <div className="fixed top-4 left-4 z-50 flex gap-2">
+      <button
+        onClick={() => setShowPdfOnMobile(!showPdfOnMobile)}
+        className="p-2 mt-10 bg-white rounded-full shadow-md"
+      >
+        <FileText size={22} />
+      </button>
+    </div>
+  )}
+  <div className="h-screen flex transition-all duration-300">
+    {isMobile ? (
+      <>
+        <div
+          className={`h-full bg-white shadow-lg transition-transform duration-300 ${
+            showPdfOnMobile ? 'translate-x-0 w-1/2' : '-translate-x-full w-0 pointer-events-none'
+          }`}
+        >
+          <DocViewer doc={doc} canEdit={doc.userPermissions.canEdit} />
+        </div>
+        <div
+          className={`flex-1 transition-all duration-300 ${
+            showPdfOnMobile ? 'ml-1/2' : 'ml-0'
+          }`}
+        >
+          <Sidebar
+            canEdit={doc.userPermissions.canEdit}
+            username={doc.userPermissions.username || ''}
+            isOwner={doc.userPermissions.isOwner}
+            isVectorised={doc.isVectorised}
+          />
+        </div>
+      </>
+    ) : (
       <ResizablePanelGroup autoSaveId="window-layout" direction="horizontal">
         <ResizablePanel defaultSize={50} minSize={30}>
           <div className="h-screen min-w-[25vw] border-stone-200 bg-white sm:rounded-lg sm:border-r sm:shadow-lg">
-            <DocViewer  doc={doc}  canEdit={doc.userPermissions.canEdit} />
+            <DocViewer doc={doc} canEdit={doc.userPermissions.canEdit} />
           </div>
         </ResizablePanel>
         <div className="group flex w-2 cursor-col-resize items-center justify-center rounded-md bg-gray-50">
@@ -77,6 +111,13 @@ const DocViewerPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-    </>
-  );
-};export default DocViewerPage;
+    )}
+  </div>
+</>
+
+    
+    
+  )
+);
+};
+export default DocViewerPage;

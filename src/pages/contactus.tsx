@@ -7,17 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 const ContactUsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0E1016] to-[#111827] flex flex-col p-4 sm:p-6 lg:p-8">
-      <Link
-        href="/"
-        className={cn(
-          buttonVariants({ variant: "ghost" }),
-          "w-fit self-start text-green-500 mb-8 sm:mb-12"
-        )}
-      >
-        <ChevronLeftIcon className="mr-2 h-4 w-4" />
-        Back
-      </Link>
-
+      
       <div className="flex-grow flex items-center justify-center">
         <div className="w-full max-w-4xl bg-gray-800 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
           <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-6">Contact Us</h1>

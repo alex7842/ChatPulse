@@ -64,7 +64,7 @@ const Research: React.FC<{
   
       
       setResearchCount(newCount => {
-        console.log("New research count:", newCount);
+        
         return data.researchCount;
       });
     },
@@ -121,15 +121,15 @@ const Research: React.FC<{
     }
   }, []);
   useEffect(() => {
-    console.log("Updated researchCount:", researchCount);
+  
     setResearchCount(researchCount);
   }, [researchCount]);
 
   useEffect(() => {
     if (researchResponse) {
       setPdfSummary(researchResponse);
-      console.log("PDF Summary1:", researchResponse);
-      console.log("PDF by state:", pdfSummary);
+      // console.log("PDF Summary1:", researchResponse);
+      // console.log("PDF by state:", pdfSummary);
     }
   }, [researchResponse]);
 
@@ -144,7 +144,7 @@ const Research: React.FC<{
       try {
         setIsLoading(true);
         setResponse('');
-        console.log("for context is", pdfSummary);
+        // console.log("for context is", pdfSummary);
         const contextualQuery = pdf ? `${query} (give answer related to this keywords: ${pdfSummary})` : query;
         const contextualQuery1 = pdf ? `${query} (search by this keywords: ${pdfSummary})` : query;
         const filledQuery = contextualQuery.length < 5 ? contextualQuery + ' '.repeat(5 - contextualQuery.length) : contextualQuery;
@@ -221,11 +221,11 @@ const Research: React.FC<{
         setQuery('');
         setIsLoading(false);
 
-        console.log("research count",researchCount);
+        // console.log("research count",researchCount);
 
-        console.log('Serper API Response:', serperData);
-        console.log('Tavily API Response:', tavilyResult);
-        console.log('Serper Videos Response:', serperVideosData);
+        // console.log('Serper API Response:', serperData);
+        // console.log('Tavily API Response:', tavilyResult);
+        // console.log('Serper Videos Response:', serperVideosData);
 
         const combinedResponse = `Serper API Response: ${JSON.stringify(serperData)}\n\nTavily API Response: ${JSON.stringify(tavilyResult)}`;
         for (let i = 0; i < combinedResponse.length; i++) {
@@ -514,7 +514,7 @@ const Research: React.FC<{
           />
         <button
   onClick={(e) => {
-    if (plan === 'FREE' && researchCount >= PLANS.FREE.maxresearch) {
+    if (plan === 'FREE' && researchCount > PLANS.FREE.maxresearch) {
       e.preventDefault();
       toast.error(
         <div>
@@ -550,7 +550,7 @@ const Research: React.FC<{
   }}
   className={`group w-fit rounded-ee-md rounded-se-md px-2 ${
     isLoading ||
-    (plan === 'FREE' && researchCount >= PLANS.FREE.maxresearch) ||
+    (plan === 'FREE' && researchCount > PLANS.FREE.maxresearch) ||
     (plan === 'PRO' &&
       (new Date() > new Date(subscriptionDetails.subscriptionEndDate!) ||
       subscriptionDetails.subscriptionStatus !== 'active' ||
@@ -676,8 +676,8 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
     }
 );
 
-  console.log("user plan",userPlan,"chatcount",chatCount)
-  console.log("sub details",subscriptionDetails)
+  // console.log("user plan",userPlan,"chatcount",chatCount)
+  // console.log("sub details",subscriptionDetails)
   useEffect(() => {
     const sendMessage = (message: string) => {
       append({
@@ -759,7 +759,7 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
     navigator.clipboard.writeText(content).then(() => {
       toast.error(`Copied!`, {
         duration: 1000});
-      console.log('Message copied to clipboard');
+      // console.log('Message copied to clipboard');
       // You can add a toast notification here if desired
     }).catch((err) => {
       console.error('Failed to copy message: ', err);
@@ -890,7 +890,7 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
   onKeyDown={(e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) {
+      if (userPlan === 'FREE' && chatCount !== null && chatCount > PLANS.FREE.maxchat) {
         toast.error(
           <div>
             <p className=" text-lg leading-relaxed text-gray-700">{`Daily limit ${PLANS.FREE.maxchat} queries reached. Come back tomorrow or upgrade to PRO!`}</p>
@@ -939,7 +939,7 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
                   ) : (
                     <button
                     className={`group w-fit rounded-ee-md rounded-se-md px-2 ${
-                      (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) ||
+                      (userPlan === 'FREE' && chatCount !== null && chatCount > PLANS.FREE.maxchat) ||
                       (userPlan === 'PRO' &&
                        (new Date() > new Date(subscriptionDetails.subscriptionEndDate!) ||
                         subscriptionDetails.subscriptionStatus !== 'active' ||
