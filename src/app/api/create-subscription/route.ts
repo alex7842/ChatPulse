@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
+export const runtime = 'edge';
 
 export async function POST(request: Request) {
     const body = await request.json();

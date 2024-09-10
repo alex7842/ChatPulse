@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+export const runtime = 'edge';
 
 export async function POST(request: Request) {
   try {
