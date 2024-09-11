@@ -23,11 +23,11 @@ const config = {
   experimental: {
     // runtime: 'experimental-edge',
   },
-  webpack: (config, { isServer }) => {
-    config.resolve.fallback = {
+  webpack: (webpackConfig) => {
+    webpackConfig.resolve.fallback = {
       crypto: require.resolve('crypto-browserify'),
     };
-    return config;
+    return webpackConfig;
   },
 };
 

@@ -3,7 +3,9 @@ import { authOptions } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 import { getServerSession } from "next-auth";
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+
+
 
 export async function POST(req: Request, res: Response) {
   const { flashcardId, docId, prompt } = await req.json();
