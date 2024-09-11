@@ -21,24 +21,14 @@ const config = {
     includePaths: [path.join(process.cwd(), 'src/styles')],
   },
   experimental: {
-   // runtime: 'experimental-edge',
+    // runtime: 'experimental-edge',
   },
-  /**
-   * @param {import('webpack').Configuration} config
-   * @param {{ isServer: boolean }} options
-   */
   webpack: (config, { isServer }) => {
-    // Ensure resolve is defined
-    config.resolve = config.resolve || {};
-  
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        crypto: 'crypto-browserify', // Use string in ESM
-      };
-    }
+    config.resolve.fallback = {
+      crypto: require.resolve('crypto-browserify'),
+    };
     return config;
   },
-}  
+};
 
 export default withConfig(config);
