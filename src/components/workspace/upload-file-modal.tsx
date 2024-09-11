@@ -159,7 +159,7 @@ const UploadFileModal = ({
           ) : (
             <>
               <p className="text-sm font-normal text-gray-500">
-                Choose files under 6 pages to use AI, flashcard. (For now)
+                Choose files under 12 pages to use AI, flashcard. (For now)
               </p>
 
               <div className="mb-2" />

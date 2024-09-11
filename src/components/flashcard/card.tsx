@@ -92,7 +92,7 @@ const IndividualFlashcard = ({
   const [userResponse, setUserResponse] = useState("");
 
   return (
-    <div className="flex h-full flex-col justify-between ">
+    <div className="flex h-full flex-col justify-between mt-10 sm:mt-12">
       <div className="flex-grow overflow-scroll">
         {hasAttempted ? (
           <IndividualFlashcardReport

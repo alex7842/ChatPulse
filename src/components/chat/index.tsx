@@ -315,7 +315,7 @@ const Research: React.FC<{
   
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] w-full bg-white sm:rounded-lg sm:border sm:shadow-lg relative">
-      <div className="flex items-center justify-between p-1 border-b">
+      <div className="flex items-center justify-between p-1 border-b mt-4">
         <button onClick={() => setisopen(false)} className="text-gray-600 hover:text-gray-800 transition-colors">
           <ArrowLeft className="h-6 w-6" />
         </button>

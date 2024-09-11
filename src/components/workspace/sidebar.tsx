@@ -171,7 +171,7 @@ const Sidebar = ({
   const [showDrawingTab, setShowDrawingTab] = useState(false);
   const { editor } = useBlocknoteEditorStore();
   const [activeIndex, setActiveIndex] = useState(
-    tab && tabNames.includes(tab) ? tab : "notes",
+    tab && tabNames.includes(tab) ? tab : "chat",
   );
   const { data: session } = useSession();
   const[ispro,setispro]=useState(true);

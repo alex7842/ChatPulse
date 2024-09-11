@@ -55,42 +55,45 @@ const DocViewerPage = () => {
   }
 
   return (
-    (
-<>
-  {isMobile && (
-    <div className="fixed top-4 left-4 z-50 flex gap-2">
-      <button
-        onClick={() => setShowPdfOnMobile(!showPdfOnMobile)}
-        className="p-2 mt-10 bg-white rounded-full shadow-md"
-      >
-        <FileText size={22} />
-      </button>
-    </div>
-  )}
-  <div className="h-screen flex transition-all duration-300">
-    {isMobile ? (
-      <>
-        <div
-          className={`h-full bg-white shadow-lg transition-transform duration-300 ${
-            showPdfOnMobile ? 'translate-x-0 w-1/2' : '-translate-x-full w-0 pointer-events-none'
-          }`}
-        >
-          <DocViewer doc={doc} canEdit={doc.userPermissions.canEdit} />
+ 
+  (
+    <>
+      {isMobile && (
+        <div className="fixed top-4 left-4 z-50 flex gap-2">
+          <button
+            onClick={() => setShowPdfOnMobile(!showPdfOnMobile)}
+            className="p-2 mt-11 bg-white rounded-full shadow-md"
+          >
+            <FileText size={22} />
+          </button>
         </div>
-        <div
-          className={`flex-1 transition-all duration-300 ${
-            showPdfOnMobile ? 'ml-1/2' : 'ml-0'
-          }`}
-        >
-          <Sidebar
-            canEdit={doc.userPermissions.canEdit}
-            username={doc.userPermissions.username || ''}
-            isOwner={doc.userPermissions.isOwner}
-            isVectorised={doc.isVectorised}
-          />
-        </div>
-      </>
-    ) : (
+      )}
+      <div className="h-screen flex transition-all duration-300">
+        {isMobile ? (
+          <>
+            <div
+              className={`h-full bg-white shadow-lg transition-transform duration-300 ${
+                showPdfOnMobile ? 'w-1/3' : 'w-0'
+              }`}
+            >
+              {showPdfOnMobile && (
+                <DocViewer doc={doc} canEdit={doc.userPermissions.canEdit} />
+              )}
+            </div>
+            <div
+              className={`flex-1 transition-all duration-300 ${
+                showPdfOnMobile ? 'w-1/2' : 'w-full'
+              }`}
+            >
+              <Sidebar
+                canEdit={doc.userPermissions.canEdit}
+                username={doc.userPermissions.username || ''}
+                isOwner={doc.userPermissions.isOwner}
+                isVectorised={doc.isVectorised}
+              />
+            </div>
+          </>
+        )   : (
       <ResizablePanelGroup autoSaveId="window-layout" direction="horizontal">
         <ResizablePanel defaultSize={50} minSize={30}>
           <div className="h-screen min-w-[25vw] border-stone-200 bg-white sm:rounded-lg sm:border-r sm:shadow-lg">

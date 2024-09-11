@@ -18,6 +18,12 @@ const config = {
   sassOptions: {
     includePaths: [path.join(process.cwd(), 'src/styles')],
   },
+ 
+
+  
+  
+  
+  
 };
 
 export default withConfig(config);
