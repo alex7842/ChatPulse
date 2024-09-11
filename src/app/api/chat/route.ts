@@ -9,7 +9,7 @@ import { PineconeStore } from "@langchain/pinecone";
 import { getServerSession } from "next-auth";
 
 import { ChatCompletionMessageParam } from 'openai/resources/chat';
-
+export const runtime = 'edge';
 function formatMessages(messages: any[], systemContent: string): ChatCompletionMessageParam[] {
   const formattedMessages: ChatCompletionMessageParam[] = [];
 
