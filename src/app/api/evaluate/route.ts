@@ -3,7 +3,7 @@ import { authOptions } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 import { getServerSession } from "next-auth";
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 
 
