@@ -2,7 +2,7 @@ import { env } from "@/env.mjs";
 import fireworks from "@/lib/fireworks";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   if (env.NODE_ENV === "development") {
