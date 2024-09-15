@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
