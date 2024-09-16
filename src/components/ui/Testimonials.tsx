@@ -17,7 +17,7 @@ const testimonials = [
   {
     name: 'Ethan Brooks',
     text: 'I deal with extensive documents daily as a researcher. ChatWithPDF allows me to extract key information and insights better. It&apos;s an invaluable tool for my research.',
-    image: '/girl-2.png',
+    image: '',
   },
 ];
 
@@ -38,7 +38,7 @@ const Testimonials: React.FC = () => {
       <div className="flex items-center">
         <Image
           src={testimonial.image}
-          alt={testimonial.name}
+           alt=""
           width={48}
           height={48}
           className="rounded-full mr-4"

@@ -57,7 +57,7 @@ const UpgradeButton: FC<UpgradeButtonProps> = ({ plan, price }) => {
   const getAmount = (plan: string): number => {
     switch (plan) {
       case 'weekly':
-        return 2;
+        return 400;
       case 'monthly':
         return 800;
       case 'yearly':
