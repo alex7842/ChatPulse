@@ -77,7 +77,7 @@ const Footer = () => {
               About Us
             </h4>
             <p className={`text-sm mb-4 ${glowingTextClass}`}>
-              ChatPulse is a cutting-edge AI-powered document assistant designed to streamline your document management processes. From creating and editing to organizing and sharing, ChatPulse enhances your productivity and ensures your documents are always in top shape.
+              ChatPulse is a cutting-edge AI-powered document assistant designed to streamline your document management processes. From creating and editing to organizing and sharing.
             </p>
           </div>
         </div>
