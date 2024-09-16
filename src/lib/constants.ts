@@ -37,6 +37,7 @@ export const PLANS: Record<Plan, PlanData> = {
     maxchat:Infinity,
     maxDocs: Infinity,
     maxPagesPerDoc: 50,
+    
     maxFileSizePerDoc: 10 * 1024 * 1024,
 
     maxquestion:30,

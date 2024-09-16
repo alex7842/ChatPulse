@@ -45,11 +45,11 @@ const UpgradePlansPage = () => {
       quota: PLANS.PRO.maxDocs,
       features: [
         {
-          text: `${PLANS.PRO.maxPagesPerDoc} pages per PDF`,
+          text: `40 pages per PDF`,
           footnote: "The maximum amount of pages per PDF-file.",
         },
         {
-          text: `${PLANS.PRO.maxFileSizePerDoc / (1024 * 1024)}MB file size limit`,
+          text: `20 MB file size limit`,
           footnote: "The maximum file size of a single PDF file.",
         },
         {
@@ -71,11 +71,11 @@ const UpgradePlansPage = () => {
       quota: PLANS.PRO.maxDocs,
       features: [
         {
-          text: `${PLANS.PRO.maxPagesPerDoc} pages per PDF`,
+          text: `60 pages per PDF`,
           footnote: "The maximum amount of pages per PDF-file.",
         },
         {
-          text: `${PLANS.PRO.maxFileSizePerDoc / (1024 * 1024)}MB file size limit`,
+          text: `50 MB file size limit`,
           footnote: "The maximum file size of a single PDF file.",
         },
         {
@@ -97,11 +97,11 @@ const UpgradePlansPage = () => {
       quota: PLANS.PRO.maxDocs * 12,
       features: [
         {
-          text: `${PLANS.PRO.maxPagesPerDoc} pages per PDF`,
+          text: `90  pages per PDF`,
           footnote: "The maximum amount of pages per PDF-file.",
         },
         {
-          text: `${PLANS.PRO.maxFileSizePerDoc / (1024 * 1024)}MB file size limit`,
+          text: `80 MB file size limit`,
           footnote: "The maximum file size of a single PDF file.",
         },
         {
