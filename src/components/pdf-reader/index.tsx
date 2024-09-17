@@ -219,10 +219,6 @@ const DocViewer = ({
     });
   };
 
-  // if (isError) {
-  //   return <>error</>;
-  // }
-
   if (!doc || !doc.highlights || !isReady) {
     return;
   }
