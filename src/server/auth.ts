@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
           token.id = user?.id;
           try {
             // Use axios or node-fetch for server-side fetch
-          const response=  await axios.post(`${process.env.NEXTAUTH_URL}/api/send-welcome`, {
+          const response=  await axios.post(`/api/send-welcome`, {
               email: user.email,
               name: user.name,
             });
