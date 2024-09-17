@@ -33,17 +33,17 @@ export const authOptions: NextAuthOptions = {
         
         if (user) {
           token.id = user?.id;
-          try {
-            // Use axios or node-fetch for server-side fetch
-          const response=  await axios.post(`/api/send-welcome`, {
-              email: user.email,
-              name: user.name,
-            });
+          // try {
+          //   // Use axios or node-fetch for server-side fetch
+          // const response=  await axios.post(`/api/send-welcome`, {
+          //     email: user.email,
+          //     name: user.name,
+          //   });
             
-            console.log('Welcome email response:', response.data);
-          } catch (error) {
-            console.error('Error sending welcome email:', error);
-          }
+          //   console.log('Welcome email response:', response.data);
+          // } catch (error) {
+          //   console.error('Error sending welcome email:', error);
+          // }
         }
       
         return token;
