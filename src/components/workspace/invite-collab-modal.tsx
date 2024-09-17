@@ -24,19 +24,28 @@ import { TrashIcon, UserPlus, XIcon } from "lucide-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { toast } from "sonner";
+import emailjs from '@emailjs/browser';
 
 type CollaboratorRoleValuesUnion = keyof typeof CollaboratorRole;
 
 const InviteCollab = () => {
   const { query } = useRouter();
   const documentId = query?.docId as string;
-
+  const {
+    data: userDocs,
+    isError,
+    isLoading,
+    refetch: refetchUserDocs,
+  } = api.user.getUsersDocs.useQuery();
+  
   const { data: collaborators } = api.document.getCollaborators.useQuery({
     documentId,
   });
 
   const utils = api.useContext();
-
+  const prev = utils.document.getCollaborators.getData({
+    documentId,
+  });
   const { mutate: addCollaboratorMutation } =
     api.document.addCollaborator.useMutation({
       async onMutate({ documentId, data: { email, role } }) {
@@ -118,6 +127,7 @@ const InviteCollab = () => {
     CollaboratorRole.VIEWER,
   );
 
+
   const addCollaborator = async () => {
     try {
       if (!email || !role) return;
@@ -128,6 +138,22 @@ const InviteCollab = () => {
           role,
         },
       });
+    
+
+      // Initialize EmailJS with your public key
+      emailjs.init("n2HHehuy4rt5Tus2C");
+      
+      try {
+        await emailjs.send("service_g0bctsb", "template_77ad4dv", {
+          from_name: userDocs?.name || "User",
+           
+          to_email: email,
+          role:role
+        });
+      } catch (er) {
+        console.log("emailjs ", er);
+      }
+      
       // todo do optimisitc update here
       setEmail("");
       setRole(CollaboratorRole.VIEWER);

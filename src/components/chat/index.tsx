@@ -814,9 +814,10 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
 </div>
 
 
-          <div className="flex h-full w-full flex-col overflow-hidden">
+<div className="flex h-[calc(100%-10%)] w-full flex-col overflow-hidden">
+
           <div
-  className="hideScrollbar flex-1 overflow-auto"
+  className="hideScrollbar flex-1 overflow-auto pb-4"
   ref={messageWindowRef}
 >
   {[
@@ -880,9 +881,9 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
 </div>
 
   
-            <div className="mt-auto">
+            <div className="sticky bottom-0 bg-white">
               <form onSubmit={handleSubmit}>
-                <div className="mb-2 mt-1 flex w-full">
+                <div className="flex w-full">
                 <TextareaAutosize
   maxLength={1000}
   placeholder="Enter your question (max 1,000 characters)"

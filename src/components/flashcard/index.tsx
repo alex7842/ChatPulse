@@ -28,7 +28,7 @@ const Flashcards = () => {
   if (isError || !flashcards) return <div>Something went wrong</div>;
 
   return (
-    <div className="h-full">
+    <div className="h-[calc(100%-12%)]">
       {flashcards.length === 0 && (
         <FeatureCard
           isLoading={isGeneratingFlashcards}

@@ -3,9 +3,11 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+
 import { env } from "@/env.mjs";
 import { prisma } from "@/server/db";
 
+import axios from 'axios';
 export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
@@ -28,9 +30,22 @@ export const authOptions: NextAuthOptions = {
       });
 
       if (!dbUser) {
+        
         if (user) {
           token.id = user?.id;
+          try {
+            // Use axios or node-fetch for server-side fetch
+          const response=  await axios.post(`${process.env.NEXTAUTH_URL}/api/send-welcome`, {
+              email: user.email,
+              name: user.name,
+            });
+            
+            console.log('Welcome email response:', response.data);
+          } catch (error) {
+            console.error('Error sending welcome email:', error);
+          }
         }
+      
         return token;
       }
 
