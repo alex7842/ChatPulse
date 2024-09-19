@@ -8,6 +8,7 @@ import ProUploadFileModal from "@/components/workspace/pro-upload-file-modal";
 import UploadFileModal from "@/components/workspace/upload-file-modal";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 import { ChevronLeftIcon, SearchIcon, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -19,9 +20,10 @@ const UserLibraryPage = () => {
     isLoading,
     refetch: refetchUserDocs,
   } = api.user.getUsersDocs.useQuery();
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const deleteDocMutation = api.document.deleteDocument.useMutation();
-  const { toast } = useToast();
+  const {toast} = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<{
     id: string;
@@ -32,7 +34,7 @@ const UserLibraryPage = () => {
   if (isLoading) return <SpinnerPage />;
   if (!userDocs)
     return <div className="text-gray-500">Sorry no result found</div>;
-
+ 
   const combinedUserDocs = [
     ...userDocs?.documents,
     ...userDocs?.collaboratorateddocuments?.map((collab) => collab.document),

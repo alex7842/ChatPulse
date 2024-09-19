@@ -55,7 +55,7 @@ const Testimonials: React.FC = () => {
             {/* Add star rating */}
               <div className="flex items-center mt-4 mb-2">
                 {testimonial.image && (
-                  <Image
+                  <Image 
                     src={testimonial.image}
                     alt={testimonial.name}
                     width={48}

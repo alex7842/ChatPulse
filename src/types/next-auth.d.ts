@@ -8,6 +8,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: UserId;
     plan: Plan;
+    firstLogin?: boolean;
+
   }
 }
 
@@ -16,6 +18,7 @@ declare module "next-auth" {
     user: User & {
       id: UserId;
       plan: Plan;
+      firstLogin?: boolean;
     };
   }
 }
