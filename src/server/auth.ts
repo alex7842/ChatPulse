@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
           body: `<div style="font-family: Arial, sans-serif; color: #333;">
   <h2 style="color: #2E86C1;">Hey {{name}}, Your Files Are Waiting for You! 📄</h2>
   
-  <p>We noticed it’s been a little while since you’ve last visited Chatpulse, and your files miss you! Don’t worry, they’re all safe and sound – just waiting for you to dive back in.</p>
+  <p>We noticed it's been a little while since you've last visited Chatpulse, and your files miss you! Don’t worry, they’re all safe and sound – just waiting for you to dive back in.</p>
   
   <p>With Chatpulse, you can:</p>
 
@@ -49,7 +49,7 @@ export const authOptions: NextAuthOptions = {
 
   <p>Ready to pick up where you left off? <a href="https://www.chatpulse.dev" style="color: #2E86C1; text-decoration: none;"><strong>Log in now</strong></a> and start chatting with your documents again. 🚀</p>
 
-  <p>If you have any questions or need assistance, feel free to reach out – we’re always here to help you get the most out of Chatpulse.</p>
+  <p>If you have any questions or need assistance, feel free to reach out , we're always here to help you get the most out of Chatpulse.</p>
 
   <p>Best regards,<br>
   The Chatpulse Team 💡</p>
