@@ -25,7 +25,7 @@ async function sendToMakeWebhook(userData: any) {
     console.error('Error sending data to Make webhook:', error);
   }
 }
-
+//first time sign up mail using make
 export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
