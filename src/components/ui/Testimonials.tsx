@@ -5,19 +5,19 @@ import { Star } from 'lucide-react'; // Shadcn Star icon
 const testimonials = [
   {
     name: 'Olivia Turner',
-    text: 'ChatWithPDF has transformed how I study. I can ask my textbooks questions and get instant answers. It&apos;s like having a personal tutor available 24/7!',
+    text: 'ChatPulse has transformed how I study. I can ask my textbooks questions and get instant answers. It&apos;s like having a personal tutor available 24/7!',
     image: '/girl-1.png',
     rating: 4.5,
   },
   {
     name: 'Eva Williams',
-    text: 'I often work with documents in PDF format usually, and the functionality offered by ChatWithPDF not only made my daily life a lot easier but also prompted me to write this review. I like how convenient this tool is and how quickly I can find the necessary information even inside huge files.',
+    text: 'I often work with documents in PDF format usually, and the functionality offered by ChatPulse not only made my daily life a lot easier but also prompted me to write this review. I like how convenient this tool is and how quickly I can find the necessary information even inside huge files.',
     image: '/girl-2.png',
     rating: 4,
   },
   {
     name: 'Ethan Brooks',
-    text: 'I deal with extensive documents daily as a researcher. ChatWithPDF allows me to extract key information and insights better. It&apos;s an invaluable tool for my research.',
+    text: 'I deal with extensive documents daily as a researcher. ChatPulse allows me to extract key information and insights better. It&apos;s an invaluable tool for my research.',
     image: '',
     rating: 4.7,
   },
