@@ -33,4 +33,5 @@ EXPOSE 3000
 ENV PORT 3000
 
 # Run Prisma generate as part of startup
-CMD npx prisma generate && npm start
+RUN npx prisma generate
+CMD ["npm", "run","dev"]
