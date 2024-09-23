@@ -7,14 +7,14 @@ ENV NODE_ENV=production
 # Set the working directory in the container
 WORKDIR /app
 
-# Install libc6-compat for compatibility with certain libraries
-RUN apk add --no-cache libc6-compat
+# Install dependencies required by Alpine for compatibility with libraries
+RUN apk add --no-cache libc6-compat python3 make g++
 
 # Copy package.json and package-lock.json to the container
 COPY package*.json ./
 
-# Install all dependencies including development dependencies
-RUN npm install
+# Install all dependencies, including dev dependencies for Prisma
+RUN npm ci
 
 # Copy Prisma schema to the container
 COPY prisma ./prisma
@@ -35,4 +35,4 @@ EXPOSE 3000
 ENV PORT=3000
 
 # Start the Next.js application using the built code
-CMD ["npm", "run", "start"]
+CMD ["npm", "start"]
