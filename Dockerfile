@@ -4,8 +4,7 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package*.json ./
 RUN npm install --force
-RUN npx prisma init --datasource-provider postgresql
-RUN npx prisma generate
+
 
 FROM node:18-alpine AS builder
 WORKDIR /app
