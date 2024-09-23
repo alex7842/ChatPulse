@@ -1,38 +1,36 @@
-# Use an official Node runtime as the base image
-FROM node:18-alpine
-
-# Set environment variables for production
-ENV NODE_ENV=production
-
-# Set the working directory in the container
+FROM node:18-alpine AS deps
 WORKDIR /app
 
-# Install dependencies required by Alpine for compatibility with libraries
-RUN apk add --no-cache libc6-compat python3 make g++
-
-# Copy package.json and package-lock.json to the container
+RUN apk add --no-cache libc6-compat
 COPY package*.json ./
-
-# Install all dependencies, including dev dependencies for Prisma
 RUN npm ci
 
-# Copy Prisma schema to the container
-COPY prisma ./prisma
-
-# Generate Prisma Client
-RUN npx prisma generate
-
-# Copy the rest of the application code to the container
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Build the Next.js application
+RUN npx prisma generate
 RUN npm run build
 
-# Expose the port that the app will run on
+FROM node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+# Copy Prisma files
+COPY --from=builder /app/prisma ./prisma
+
+USER nextjs
+
 EXPOSE 3000
+ENV PORT 3000
 
-# Define the port that Cloud Run will use to serve the app
-ENV PORT=3000
-
-# Start the Next.js application using the built code
-CMD ["npm", "start"]
+# Run Prisma generate as part of startup
+CMD npx prisma generate && npm start
