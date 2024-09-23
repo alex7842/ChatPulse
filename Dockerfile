@@ -1,48 +1,48 @@
-# Install dependencies in a separate build stage
+# Install dependencies only when needed
 FROM node:18-alpine AS deps
 WORKDIR /app
 
-# Add libc6-compat for compatibility and install dependencies
-RUN apk add --no-cache libc6-compat
+# Install Prisma CLI and required system dependencies
+RUN apk add --no-cache libc6-compat openssl
 COPY package*.json ./
+
+# Install all dependencies (including devDependencies)
 RUN npm install --force
 
-# Build stage
+# Rebuild the Prisma client
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Build the application
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copy over node_modules from deps and the app code
+# Copy the necessary files for the build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Copy Prisma schema for migrations and generation
-COPY ./prisma ./prisma
-
-# Run Prisma generate before building
-RUN npx prisma generate
-
-# Build the Next.js app
+# Build the Next.js application
 RUN npm run build
 
-# Production image
+# Prepare the final running image
 FROM node:18-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
-# Add user for security
+# Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy required build artifacts from builder stage
+# Copy the built files and dependencies from the builder
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-# Use non-root user
+# Use the non-root user
 USER nextjs
 
-# Expose the port
+# Expose the required port
 EXPOSE 3000
 ENV PORT 3000
 
