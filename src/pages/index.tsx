@@ -7,7 +7,8 @@ import Testimonials from "@/components/ui/Testimonials";
 import { ArrowRight, MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from 'next/router';
-// app starts here
+
+
 export default function Home() {
   const router = useRouter();
 
