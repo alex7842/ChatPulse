@@ -26,6 +26,7 @@ async function sendToMakeWebhook(userData: any) {
   }
 }
 //first time sign up mail using make
+const isoDate = new Date().toISOString();
 export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
@@ -56,7 +57,14 @@ export const authOptions: NextAuthOptions = {
 </div>
 `,
           subject: "Your Files Are Missing You! Chat with Them Again ⚡",
-          timestamp : new Date().toISOString()
+          timestamp :new Date(isoDate).toLocaleString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }).replace(',', '')
         };
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email! },
