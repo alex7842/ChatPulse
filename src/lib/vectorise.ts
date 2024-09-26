@@ -10,13 +10,16 @@ export const vectoriseDocument = async (
   newFileId: string,
   maxPagesAllowed: number,
 ) => {
-  // TODO better to add pagecount to db, so that page count limit can be checked easily.
+  
   const response = await fetch(fileUrl);
   const blob = await response.blob();
   const loader = new PDFLoader(blob);
 
   const pageLevelDocs = await loader.load();
   const pageCount = pageLevelDocs.length;
+  if (pageCount === 0 || pageLevelDocs.every(doc => !doc.pageContent.trim())) {
+    throw new Error("PDF has no readable content.");
+  }
 
   if (pageCount > maxPagesAllowed) {
     throw new Error(
