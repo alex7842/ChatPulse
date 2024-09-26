@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
         const userData = {
           ...user,
           body: `<div style="font-family: Arial, sans-serif; color: #333;">
-  <h2 style="color: #2E86C1;">Hey {{name}}, Your Files Are Waiting for You! 📄</h2>
+ 
   
   <p>We noticed it's been a little while since you've last visited Chatpulse, and your files miss you! Don’t worry, they’re all safe and sound – just waiting for you to dive back in.</p>
   
