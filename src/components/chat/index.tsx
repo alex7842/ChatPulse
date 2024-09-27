@@ -572,7 +572,7 @@ const Research: React.FC<{
 export default function Chat({ isVectorised }: { isVectorised: boolean }) {
   const { query } = useRouter();
   const [isopen, setisopen] = useState(false);
-  
+
   
   const docId = query?.docId as string;
   interface SubscriptionDetails {
@@ -620,6 +620,7 @@ const router = useRouter();
     subscriptionId: null,
   });
  const[load,setload]=useState(false);
+ 
   
  
   const deleteChatsMutation = api.document.deleteAllChats.useMutation({
@@ -671,8 +672,10 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
       enabled: !!docId,
       onSuccess: (data:{chatCount :number}) => {
         setChatCount(data.chatCount);
+        
+        console.log("chatcount",chatCount)
       },
-      refetchInterval: 60000,
+      refetchInterval: 10000,
     }
 );
 
@@ -891,7 +894,7 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
   onKeyDown={(e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (userPlan === 'FREE' && chatCount !== null && chatCount > PLANS.FREE.maxchat) {
+      if (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) {
         toast.error(
           <div>
             <p className=" text-lg leading-relaxed text-gray-700">{`Daily limit ${PLANS.FREE.maxchat} queries reached. Come back tomorrow or upgrade to PRO!`}</p>
@@ -940,7 +943,7 @@ const { data: documentCountData, isLoading: isDocumentCountLoading } = api.docum
                   ) : (
                     <button
                     className={`group w-fit rounded-ee-md rounded-se-md px-2 ${
-                      (userPlan === 'FREE' && chatCount !== null && chatCount > PLANS.FREE.maxchat) ||
+                      (userPlan === 'FREE' && chatCount !== null && chatCount >= PLANS.FREE.maxchat) ||
                       (userPlan === 'PRO' &&
                        (new Date() > new Date(subscriptionDetails.subscriptionEndDate!) ||
                         subscriptionDetails.subscriptionStatus !== 'active' ||

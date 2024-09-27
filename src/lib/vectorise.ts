@@ -17,9 +17,9 @@ export const vectoriseDocument = async (
 
   const pageLevelDocs = await loader.load();
   const pageCount = pageLevelDocs.length;
-  if (pageCount === 0 || pageLevelDocs.every(doc => !doc.pageContent.trim())) {
-    throw new Error("PDF has no readable content.");
-  }
+  // if (pageLevelDocs.every(doc => !doc.pageContent.trim())) {
+  //   throw new Error("PDF has no readable content.");
+  // }
 
   if (pageCount > maxPagesAllowed) {
     throw new Error(
